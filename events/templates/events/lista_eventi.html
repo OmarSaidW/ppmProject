@@ -1,0 +1,163 @@
+{% extends 'events/base.html' %}
+{% load static %}
+
+{% block title %}Lista Eventi – EventHub{% endblock %}
+{% block nav_active_eventi %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">📅 Eventi</h1>
+        <p class="page-subtitle">Tutti gli eventi disponibili nel sistema</p>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <!-- Toggle Lista / Calendario -->
+        <div class="view-toggle" id="view-toggle">
+            <button class="view-toggle-btn active" id="btn-list" onclick="switchView('list')">☰ Lista</button>
+            <button class="view-toggle-btn" id="btn-calendar" onclick="switchView('calendar')">🗓 Calendario</button>
+        </div>
+        {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
+        <button class="btn btn-success" onclick="openModal()" id="add-event-btn">+ Nuovo Evento</button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ══ VISTA LISTA ══ -->
+<div id="list-view">
+    {% if eventi %}
+        {% for evento in eventi %}
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">{{ evento.title }}</div>
+                    <p class="card-body" style="margin-top:6px;">{{ evento.description }}</p>
+                </div>
+            </div>
+            <div class="meta-info">
+                <p>📆 <strong>Quando:</strong> {{ evento.date|date:"d M Y - H:i" }}</p>
+                <p>📍 <strong>Dove:</strong> {{ evento.location }}</p>
+                <p>👤 <strong>Supervisor:</strong>
+                    {% if evento.supervisor %}{{ evento.supervisor.username }}{% else %}Nessuno{% endif %}
+                </p>
+                <p>🤝 <strong>Organizzatori:</strong>
+                    {% for org in evento.organizers.all %}{{ org.username }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}Nessuno{% endfor %}
+                </p>
+            </div>
+            <a href="{{ evento.get_absolute_url }}" class="btn btn-sm">Vedi Dettagli →</a>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="card" style="text-align:center; padding:48px; color:var(--text-secondary);">
+            <p style="font-size:2.5rem; margin-bottom:12px;">🗓</p>
+            <p style="font-weight:600; font-size:1.1rem;">Nessun evento disponibile</p>
+            <p style="font-size:.9rem; margin-top:6px;">
+                {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
+                Crea il primo evento con il pulsante in alto!
+                {% else %}
+                Non hai ancora inviti o iscrizioni a eventi.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- ══ VISTA CALENDARIO ══ -->
+<div id="calendar-view">
+    <div class="card" style="padding:20px;">
+        <div id="fullcalendar"></div>
+    </div>
+</div>
+
+<!-- ══ MODAL CREA EVENTO ══ -->
+{% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
+<div id="addEventModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>➕ Nuovo Evento</h3>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form action="{% url 'crea_evento' %}" method="post">
+            {% csrf_token %}
+            <div style="display:flex; flex-direction:column; gap:4px;">
+                {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <small style="color:var(--text-secondary); display:block; margin-top:4px;">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <span style="color:var(--color-danger); font-size:.85rem; display:block; margin-top:4px;">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+                <button type="submit" class="btn btn-success">✓ Salva Evento</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+{% endblock %}
+
+{% block extra_scripts %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script>
+    // ── Modal ──
+    function openModal() { document.getElementById('addEventModal').classList.add('active'); }
+    function closeModal() { document.getElementById('addEventModal').classList.remove('active'); }
+    window.onclick = function(e) {
+        var m = document.getElementById('addEventModal');
+        if (m && e.target === m) closeModal();
+    };
+
+    // ── Vista Toggle ──
+    function switchView(view) {
+        const listView = document.getElementById('list-view');
+        const calView  = document.getElementById('calendar-view');
+        const btnList  = document.getElementById('btn-list');
+        const btnCal   = document.getElementById('btn-calendar');
+        if (view === 'list') {
+            listView.classList.remove('hidden');
+            calView.classList.remove('visible');
+            btnList.classList.add('active');
+            btnCal.classList.remove('active');
+        } else {
+            listView.classList.add('hidden');
+            calView.classList.add('visible');
+            btnList.classList.remove('active');
+            btnCal.classList.add('active');
+            initCalendar();
+        }
+    }
+
+    // ── FullCalendar ──
+    let calendarInitialized = false;
+    let calendar;
+    function initCalendar() {
+        if (calendarInitialized) return;
+        calendarInitialized = true;
+        const el = document.getElementById('fullcalendar');
+        calendar = new FullCalendar.Calendar(el, {
+            initialView: 'dayGridMonth',
+            locale: 'it',
+            height: 'auto',
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
+            events: '{% url "eventi_json" %}',
+            eventClick: function(info) {
+                window.location.href = info.event.url;
+                info.jsEvent.preventDefault();
+            },
+            buttonText: { today: 'Oggi', month: 'Mese', week: 'Settimana', list: 'Lista' }
+        });
+        calendar.render();
+    }
+</script>
+{% endblock %}

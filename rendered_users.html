@@ -1,0 +1,204 @@
+
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema di gestione eventi - organizza e partecipa agli eventi">
+    <title>Utenti – EventHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/events/css/style.css">
+    
+</head>
+
+<body>
+
+    <!-- ══ NAVBAR FISSA ══ -->
+    <nav class="navbar" id="main-navbar">
+        <div class="navbar-brand">
+            <span class="navbar-logo">🗓</span>
+            <span class="navbar-title">EventHub</span>
+        </div>
+        <div class="navbar-links">
+            <a href="/" class="nav-link ">
+                <span class="nav-icon">📅</span> Eventi
+            </a>
+            <a href="/users/lista/" class="nav-link active">
+                <span class="nav-icon">👥</span> Utenti
+            </a>
+        </div>
+        <div class="navbar-right">
+            <a href="/users/1/" class="nav-user-badge" id="nav-profile-link">
+                <span class="nav-avatar">A</span>
+                <span class="nav-username">admin</span>
+                <span class="nav-role-chip">ORGANIZER</span>
+            </a>
+            <form action="/users/logout/" method="post" style="display: inline; margin: 0;">
+                <input type="hidden" name="csrfmiddlewaretoken" value="B5Y2jptK4Q9vvDIm6UMY4l7AD3xrGPwQqzqwinDejPBQcPxRGepn2nEW0t5AcSZD">
+                <button type="submit" class="nav-logout-btn" id="nav-logout-btn">
+                    <span>⏻</span> Esci
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- ══ CONTENUTO PRINCIPALE ══ -->
+    <div class="page-wrapper">
+        <!-- Flash messages globali -->
+        
+
+        
+<div class="page-header">
+    <div>
+        <h1 class="page-title">👥 Utenti del Sistema</h1>
+        <p class="page-subtitle">Gestione degli account registrati</p>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Ruolo</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:var(--color-primary-light);
+                                    color:var(--color-primary); font-weight:700; display:flex; align-items:center;
+                                    justify-content:center; font-size:.85rem; flex-shrink:0;">
+                            A
+                        </div>
+                        <strong>admin</strong>
+                    </div>
+                </td>
+                <td style="color:var(--text-secondary);">—</td>
+                <td>
+                    
+                        <span class="badge badge-organizer">Organizer</span>
+                    
+                </td>
+                <td>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <a href="/users/1/" class="btn btn-sm btn-outline">
+                            👤 Profilo
+                        </a>
+                        
+                        <a href="/users/1/cambia-ruolo/" class="btn btn-sm"
+                           style="background:var(--color-warning); color:white;">
+                            ✏ Cambia Ruolo
+                        </a>
+                        
+                        <!-- Elimina utente: organizer elimina solo ATTENDEE; superuser elimina ORGANIZER -->
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:var(--color-primary-light);
+                                    color:var(--color-primary); font-weight:700; display:flex; align-items:center;
+                                    justify-content:center; font-size:.85rem; flex-shrink:0;">
+                            T
+                        </div>
+                        <strong>test_organizer</strong>
+                    </div>
+                </td>
+                <td style="color:var(--text-secondary);">—</td>
+                <td>
+                    
+                        <span class="badge badge-organizer">Organizer</span>
+                    
+                </td>
+                <td>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <a href="/users/2/" class="btn btn-sm btn-outline">
+                            👤 Profilo
+                        </a>
+                        
+                        <a href="/users/2/cambia-ruolo/" class="btn btn-sm"
+                           style="background:var(--color-warning); color:white;">
+                            ✏ Cambia Ruolo
+                        </a>
+                        
+                        <!-- Elimina utente: organizer elimina solo ATTENDEE; superuser elimina ORGANIZER -->
+                        
+                        <form action="/users/2/admin-elimina/" method="post" style="margin:0;"
+                              onsubmit="return confirm('Eliminare l\'account organizer di test_organizer?')">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="B5Y2jptK4Q9vvDIm6UMY4l7AD3xrGPwQqzqwinDejPBQcPxRGepn2nEW0t5AcSZD">
+                            <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina</button>
+                        </form>
+                        
+                    </div>
+                </td>
+            </tr>
+            
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:var(--color-primary-light);
+                                    color:var(--color-primary); font-weight:700; display:flex; align-items:center;
+                                    justify-content:center; font-size:.85rem; flex-shrink:0;">
+                            T
+                        </div>
+                        <strong>test_attendee</strong>
+                    </div>
+                </td>
+                <td style="color:var(--text-secondary);">—</td>
+                <td>
+                    
+                        <span class="badge badge-attendee">Attendee</span>
+                    
+                </td>
+                <td>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <a href="/users/3/" class="btn btn-sm btn-outline">
+                            👤 Profilo
+                        </a>
+                        
+                        <a href="/users/3/cambia-ruolo/" class="btn btn-sm"
+                           style="background:var(--color-warning); color:white;">
+                            ✏ Cambia Ruolo
+                        </a>
+                        
+                        <!-- Elimina utente: organizer elimina solo ATTENDEE; superuser elimina ORGANIZER -->
+                        
+                        <form action="/users/3/admin-elimina/" method="post" style="margin:0;"
+                              onsubmit="return confirm('Eliminare l\'account di test_attendee? Questa azione è irreversibile.')">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="B5Y2jptK4Q9vvDIm6UMY4l7AD3xrGPwQqzqwinDejPBQcPxRGepn2nEW0t5AcSZD">
+                            <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina</button>
+                        </form>
+                        
+                    </div>
+                </td>
+            </tr>
+            
+        </tbody>
+    </table>
+</div>
+
+    </div>
+
+    <script>
+        // Auto-chiudi i messaggi dopo 5 secondi
+        setTimeout(() => {
+            const msgs = document.getElementById('global-messages');
+            if (msgs) msgs.style.opacity = '0';
+        }, 5000);
+    </script>
+    
+
+</body>
+</html>
+

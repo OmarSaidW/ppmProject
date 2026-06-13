@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Crea Evento</title>
+    <link rel="stylesheet" href="{% static 'events/css/style.css' %}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Nuovo Evento</h1>
+        <hr>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                <small style="color: var(--text-secondary); display: block; margin-top: 4px;">{{ field.help_text
+                    }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                <span style="color: var(--color-danger); font-size: 0.85rem; display: block; margin-top: 4px;">{{ error
+                    }}</span>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div style="margin-top: 24px; display: flex; gap: 12px;">
+                <button type="submit" class="btn btn-success">Salva Evento</button>
+                <a href="{% url 'lista_eventi' %}" class="btn btn-secondary">Annulla</a>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,30 @@
+{% extends 'events/base.html' %}
+{% load static %}
+
+{% block title %}Modifica Profilo – EventHub{% endblock %}
+
+{% block content %}
+<div style="max-width:520px; margin:0 auto;">
+    <div class="page-header">
+        <h1 class="page-title">✏ Modifica Profilo</h1>
+    </div>
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}
+                <span style="color:var(--color-danger); font-size:.85rem; display:block; margin-top:4px;">{{ error }}</span>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <div style="display:flex; gap:10px; margin-top:8px;">
+                <button type="submit" class="btn btn-success">✓ Salva Modifiche</button>
+                <a href="{% url 'dettaglio_profilo' user.pk %}" class="btn btn-secondary">Annulla</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

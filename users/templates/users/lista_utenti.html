@@ -1,0 +1,90 @@
+{% extends 'events/base.html' %}
+{% load static %}
+
+{% block title %}Utenti – EventHub{% endblock %}
+{% block nav_active_utenti %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">👥 Utenti del Sistema</h1>
+        <p class="page-subtitle">Gestione degli account registrati</p>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Ruolo</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for utente in utenti %}
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:var(--color-primary-light);
+                                    color:var(--color-primary); font-weight:700; display:flex; align-items:center;
+                                    justify-content:center; font-size:.85rem; flex-shrink:0;">
+                            {{ utente.username|slice:":1"|upper }}
+                        </div>
+                        <strong>{{ utente.username }}</strong>
+                    </div>
+                </td>
+                <td style="color:var(--text-secondary);">{{ utente.email|default:"—" }}</td>
+                <td>
+                    {% if utente.ruolo == 'ORGANIZER' %}
+                        <span class="badge badge-organizer">Organizer</span>
+                    {% else %}
+                        <span class="badge badge-attendee">Attendee</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <a href="{% url 'dettaglio_profilo' utente.pk %}" class="btn btn-sm btn-outline">
+                            👤 Profilo
+                        </a>
+                        {% if user.ruolo == 'ORGANIZER' or user.is_superuser %}
+                        <a href="{% url 'organizer_modifica_utente' utente.pk %}" class="btn btn-sm"
+                           style="background:var(--color-warning); color:white;">
+                            ✏ Cambia Ruolo
+                        </a>
+                        {% endif %}
+                        <!-- Elimina utente: organizer elimina solo ATTENDEE; superuser elimina ORGANIZER -->
+                        {% if user.ruolo == 'ORGANIZER' and utente.ruolo == 'ATTENDEE' and user != utente %}
+                        <form action="{% url 'admin_elimina_utente' utente.pk %}" method="post" style="margin:0;"
+                              onsubmit="return confirm('Confermi la cancellazione di: {{ utente.username }}? L azione e irreversibile.')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina</button>
+                        </form>
+                        {% elif user.is_superuser and utente.ruolo == 'ORGANIZER' and not utente.is_superuser and user != utente %}
+                        <form action="{% url 'admin_elimina_utente' utente.pk %}" method="post" style="margin:0;"
+                              onsubmit="return confirm('Confermi la cancellazione dell organizer: {{ utente.username }}?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina</button>
+                        </form>
+                        {% elif user.is_superuser and utente.ruolo == 'ATTENDEE' and user != utente %}
+                        <form action="{% url 'admin_elimina_utente' utente.pk %}" method="post" style="margin:0;"
+                              onsubmit="return confirm('Confermi la cancellazione di: {{ utente.username }}?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align:center; color:var(--text-secondary); padding:32px;">
+                    Nessun utente trovato.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

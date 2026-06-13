@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema di gestione eventi - organizza e partecipa agli eventi">
+    <title>{% block title %}Gestione Eventi{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'events/css/style.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- ══ NAVBAR FISSA ══ -->
+    <nav class="navbar" id="main-navbar">
+        <div class="navbar-brand">
+            <span class="navbar-logo">🗓</span>
+            <span class="navbar-title">EventHub</span>
+        </div>
+        <div class="navbar-links">
+            <a href="{% url 'lista_eventi' %}" class="nav-link {% block nav_active_eventi %}{% endblock %}">
+                <span class="nav-icon">📅</span> Eventi
+            </a>
+            <a href="{% url 'lista_utenti' %}" class="nav-link {% block nav_active_utenti %}{% endblock %}">
+                <span class="nav-icon">👥</span> Utenti
+            </a>
+        </div>
+        <div class="navbar-right">
+            <a href="{% url 'dettaglio_profilo' user.pk %}" class="nav-user-badge" id="nav-profile-link">
+                <span class="nav-avatar">{{ user.username|slice:":1"|upper }}</span>
+                <span class="nav-username">{{ user.username }}</span>
+                <span class="nav-role-chip">{{ user.ruolo }}</span>
+            </a>
+            <form action="{% url 'logout' %}" method="post" style="display: inline; margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="nav-logout-btn" id="nav-logout-btn">
+                    <span>⏻</span> Esci
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- ══ CONTENUTO PRINCIPALE ══ -->
+    <div class="page-wrapper">
+        <!-- Flash messages globali -->
+        {% if messages %}
+        <div class="global-messages" id="global-messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <span>{{ message }}</span>
+                <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        // Auto-chiudi i messaggi dopo 5 secondi
+        setTimeout(() => {
+            const msgs = document.getElementById('global-messages');
+            if (msgs) msgs.style.opacity = '0';
+        }, 5000);
+    </script>
+    {% block extra_scripts %}{% endblock %}
+
+</body>
+</html>

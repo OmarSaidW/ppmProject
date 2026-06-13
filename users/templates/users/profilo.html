@@ -1,0 +1,46 @@
+{% extends 'events/base.html' %}
+{% load static %}
+
+{% block title %}Profilo {{ utente_profilo.username }} – EventHub{% endblock %}
+
+{% block content %}
+<div style="max-width:600px; margin:0 auto;">
+    <div class="page-header">
+        <h1 class="page-title">👤 Profilo Utente</h1>
+    </div>
+    <div class="card">
+        <div style="display:flex; align-items:center; gap:18px; margin-bottom:20px;">
+            <div style="width:64px; height:64px; border-radius:50%; background:var(--color-primary);
+                        color:#fff; font-size:1.8rem; font-weight:800; display:flex;
+                        align-items:center; justify-content:center;">
+                {{ utente_profilo.username|slice:":1"|upper }}
+            </div>
+            <div>
+                <div style="font-size:1.3rem; font-weight:700;">{{ utente_profilo.username }}</div>
+                {% if utente_profilo.ruolo == 'ORGANIZER' %}
+                    <span class="badge badge-organizer">Organizer</span>
+                {% else %}
+                    <span class="badge badge-attendee">Attendee</span>
+                {% endif %}
+            </div>
+        </div>
+        <hr>
+        <div class="meta-info">
+            <p>📧 <strong>Email:</strong> {{ utente_profilo.email|default:"Non inserita" }}</p>
+            <p>📞 <strong>Telefono:</strong> {{ utente_profilo.telefono|default:"Non specificato" }}</p>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
+            <a href="{% url 'lista_utenti' %}" class="btn btn-secondary btn-sm">← Lista Utenti</a>
+            {% if user == utente_profilo %}
+            <a href="{% url 'modifica_profilo' user.pk %}" class="btn btn-sm">✏ Modifica Dati</a>
+            <form action="{% url 'elimina_profilo' user.pk %}" method="post" style="margin:0;"
+                  onsubmit="return confirm('Sicuro di voler eliminare il tuo account?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina Account</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

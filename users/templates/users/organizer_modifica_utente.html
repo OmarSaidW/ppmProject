@@ -1,0 +1,36 @@
+{% extends 'events/base.html' %}
+{% load static %}
+
+{% block title %}Cambia Ruolo – EventHub{% endblock %}
+{% block nav_active_utenti %}active{% endblock %}
+
+{% block content %}
+<div style="max-width:520px; margin:0 auto;">
+    <div class="page-header">
+        <h1 class="page-title">🔑 Gestione Ruolo</h1>
+    </div>
+    <div class="card">
+        <p style="margin-bottom:20px; color:var(--text-secondary);">
+            Stai modificando i permessi di:
+            <strong style="color:var(--text-primary);">{{ object.username }}</strong>
+            &nbsp;
+            {% if object.ruolo == 'ORGANIZER' %}
+                <span class="badge badge-organizer">Organizer</span>
+            {% else %}
+                <span class="badge badge-attendee">Attendee</span>
+            {% endif %}
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_ruolo">Seleziona il nuovo ruolo:</label>
+                {{ form.ruolo }}
+            </div>
+            <div style="display:flex; gap:10px; margin-top:8px;">
+                <button type="submit" class="btn btn-success">✓ Aggiorna Ruolo</button>
+                <a href="{% url 'lista_utenti' %}" class="btn btn-secondary">Annulla</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Registrazione Nuovo Utente</title>
+    <link rel="stylesheet" href="{% static 'events/css/style.css' %}">
+</head>
+
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h2>Registrazione</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-success">Crea Account</button>
+            </form>
+            <div class="links">
+                Hai già un account? <a href="{% url 'login' %}">Accedi</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

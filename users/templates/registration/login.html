@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Accedi al Sistema</title>
+    <link rel="stylesheet" href="{% static 'events/css/style.css' %}">
+</head>
+
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h2>Accedi</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn">Entra</button>
+            </form>
+            <div class="links">
+                Non hai un account? <a href="{% url 'signup' %}">Registrati qui</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
