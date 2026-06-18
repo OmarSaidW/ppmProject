@@ -21,9 +21,11 @@ class EventListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.ruolo == 'ORGANIZER' or user.is_superuser:
+        if user.ruolo == 'ORGANIZER' or user.is_superuser: 
+            #Se è organizzatore o superAdmin deve (per logica ) vedere tutti gli eventi
             return Event.objects.all()
-        return Event.objects.filter(
+        return Event.objects.filter( 
+            #Altrimenti (Attendee) vede solo gli eventi a cui è iscritto o invitato
             Q(registration__user=user) | Q(invitations__invitee=user)
         ).distinct()
 
@@ -34,11 +36,14 @@ class EventListView(LoginRequiredMixin, ListView):
 
 
 # --- DETTAGLIO EVENTO ---
+#Forse la classe più completa finora visto che contiene logica di controllo per tutti e tre ruoli
+#Inoltre gestisce molto bene i template, permettendo di mostrare diversi bottoni
+
 class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Event
     template_name = 'events/dettaglio_evento.html'
     context_object_name = 'evento'
-
+    #Organizer e super admin possono vedere tutto, attendee solo se invitato
     def test_func(self):
         user = self.request.user
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
@@ -48,48 +53,68 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         has_invitation = Invitation.objects.filter(invitee=user, event=event).exists()
         return has_registration or has_invitation
 
+    #Funzione che viene chiamata prima di renderizzare il template (come in List View)
+    def _context_per_organizer(self, event, is_supervisor):
+        accepted_reg = Registration.objects.filter(
+            user=OuterRef('invitee'), event=OuterRef('event'), stato='ATTIVO'
+        )
+        ctx = {
+            'inviti': event.invitations.filter(rifiutato=False).annotate(
+                accettato=Exists(accepted_reg)
+            ).select_related('invitee', 'inviter'),
+            'invitabili': CustomUser.objects.filter(ruolo='ATTENDEE').exclude(
+                invitations_received__event=event
+            ).exclude(
+                registration__event=event
+            ),
+            'organizzatori': event.organizers.all(),
+        }
+        if is_supervisor:
+            ctx['inviti_rifiutati'] = event.invitations.filter(
+                rifiutato=True
+            ).select_related('invitee')
+        return ctx
+ 
+    def _context_per_attendee(self, event, user):
+        try:
+            mio_invito = Invitation.objects.get(invitee=user, event=event, rifiutato=False)
+        except Invitation.DoesNotExist:
+            mio_invito = None
+        try:
+            mia_registrazione = Registration.objects.get(user=user, event=event, stato='ATTIVO')
+        except Registration.DoesNotExist:
+            mia_registrazione = None
+        return {
+            'mio_invito': mio_invito,
+            'mia_registrazione': mia_registrazione,
+        }
+ 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         event = self.get_object()
         user = self.request.user
-
-        context['is_supervisor'] = (user == event.supervisor) or user.is_superuser
-
+ 
+        is_supervisor = (user == event.supervisor) or user.is_superuser
+        context['is_supervisor'] = is_supervisor
+ 
+        context['partecipanti'] = Registration.objects.filter(
+            event=event, stato='ATTIVO'
+        ).select_related('user')
+        context['usciti'] = Registration.objects.filter(
+            event=event, stato='USCITO'
+        ).select_related('user')
+ 
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
-            user_is_joined = (user == event.supervisor) or event.organizers.filter(id=user.id).exists()
+            context['user_is_joined'] = (
+                user == event.supervisor or event.organizers.filter(id=user.id).exists()
+            )
+            context.update(self._context_per_organizer(event, is_supervisor))
         else:
-            user_is_joined = Registration.objects.filter(user=user, event=event, stato='ATTIVO').exists()
-        context['user_is_joined'] = user_is_joined
-
-        context['partecipanti'] = Registration.objects.filter(event=event, stato='ATTIVO').select_related('user')
-        context['usciti'] = Registration.objects.filter(event=event, stato='USCITO').select_related('user')
-
-        if user.ruolo == 'ATTENDEE':
-            try:
-                context['mio_invito'] = Invitation.objects.get(invitee=user, event=event, rifiutato=False)
-            except Invitation.DoesNotExist:
-                context['mio_invito'] = None
-            try:
-                context['mia_registrazione'] = Registration.objects.get(user=user, event=event, stato='ATTIVO')
-            except Registration.DoesNotExist:
-                context['mia_registrazione'] = None
-
-        if user.ruolo == 'ORGANIZER' or user.is_superuser:
-            accepted_reg = Registration.objects.filter(
-                user=OuterRef('invitee'), event=OuterRef('event'), stato='ATTIVO'
-            )
-            context['inviti'] = event.invitations.filter(rifiutato=False).annotate(
-                accettato=Exists(accepted_reg)
-            ).select_related('invitee', 'inviter')
-            if context['is_supervisor']:
-                context['inviti_rifiutati'] = event.invitations.filter(rifiutato=True).select_related('invitee')
-            context['invitabili'] = CustomUser.objects.filter(ruolo='ATTENDEE').exclude(
-                invitations_received__event=event
-            ).exclude(
-                registration__event=event
-            )
-            context['organizzatori'] = event.organizers.all()
-
+            context['user_is_joined'] = Registration.objects.filter(
+                user=user, event=event, stato='ATTIVO'
+            ).exists()
+            context.update(self._context_per_attendee(event, user))
+ 
         return context
 
 

@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'events.apps.EventsConfig',
-    'users.apps.UsersConfig',
+    'events.apps.EventsConfig', #Aggiunta per gestione Eventi
+    'users.apps.UsersConfig', #Aggiunta per gestione Utentis
 ]
 
 MIDDLEWARE = [
@@ -116,11 +116,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+#Aggiunte per personalizzare
 
 STATIC_URL = 'static/'
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = 'users.CustomUser' #GestioneUtenti
 
 LOGIN_REDIRECT_URL = 'lista_eventi'  # Dopo il login, reindirizza alla homepage
 LOGOUT_REDIRECT_URL = 'login' # Dopo il logout, reindirizza alla homepage
-LOGIN_URL = 'login'
+LOGIN_URL = 'login' #Per i sistemi di autenticazione, se l'utente non è loggato, viene reindirizzato alla pagina di login
