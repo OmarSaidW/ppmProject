@@ -22,11 +22,45 @@
     </div>
 </div>
 
+<!-- ══ FILTRI EVENTI (Front-end) ══ -->
+<div class="card" style="margin-bottom: 20px; padding: 20px;">
+    <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+        <span>🔍</span> Filtra Eventi
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="filter-name" style="font-size: 0.82rem; margin-bottom: 6px; font-weight: 600;">Nome Evento</label>
+            <input type="text" id="filter-name" placeholder="Cerca per nome..." style="padding: 8px 12px; font-size: 0.88rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="filter-date-from" style="font-size: 0.82rem; margin-bottom: 6px; font-weight: 600;">Da Data</label>
+            <input type="date" id="filter-date-from" style="padding: 8px 12px; font-size: 0.88rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="filter-date-to" style="font-size: 0.82rem; margin-bottom: 6px; font-weight: 600;">A Data</label>
+            <input type="date" id="filter-date-to" style="padding: 8px 12px; font-size: 0.88rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="filter-location" style="font-size: 0.82rem; margin-bottom: 6px; font-weight: 600;">Luogo</label>
+            <input type="text" id="filter-location" placeholder="Cerca per luogo..." style="padding: 8px 12px; font-size: 0.88rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);">
+        </div>
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-secondary btn-sm" onclick="resetFilters()">Reset Filtri</button>
+    </div>
+</div>
+
 <!-- ══ VISTA LISTA ══ -->
 <div id="list-view">
+    <div id="no-filtered-events-msg" class="card" style="display:none; text-align:center; padding:48px; color:var(--text-secondary);">
+        <p style="font-size:2.5rem; margin-bottom:12px;">🔍</p>
+        <p style="font-weight:600; font-size:1.1rem;">Nessun evento corrisponde ai criteri di ricerca</p>
+        <p style="font-size:.9rem; margin-top:6px;">Prova a modificare i filtri impostati sopra.</p>
+    </div>
+
     {% if eventi %}
         {% for evento in eventi %}
-        <div class="card">
+        <div class="card event-card" data-title="{{ evento.title }}" data-date="{{ evento.date|date:'Y-m-d H:i' }}" data-location="{{ evento.location }}">
             <div class="card-header">
                 <div>
                     <div class="card-title">{{ evento.title }}</div>
@@ -159,5 +193,82 @@
         });
         calendar.render();
     }
+
+    // ── Filtri Front-end ──
+    function filterEvents() {
+        const filterName = document.getElementById('filter-name').value.toLowerCase();
+        const filterDateFrom = document.getElementById('filter-date-from').value;
+        const filterDateTo = document.getElementById('filter-date-to').value;
+        const filterLocation = document.getElementById('filter-location').value.toLowerCase();
+
+        const cards = document.querySelectorAll('.event-card');
+        let visibleCount = 0;
+        
+        cards.forEach(card => {
+            const title = card.getAttribute('data-title').toLowerCase();
+            const dateStr = card.getAttribute('data-date'); // Y-m-d H:i
+            const location = card.getAttribute('data-location').toLowerCase();
+            
+            let show = true;
+            
+            if (filterName && !title.includes(filterName)) {
+                show = false;
+            }
+            
+            if (filterLocation && !location.includes(filterLocation)) {
+                show = false;
+            }
+            
+            if (dateStr) {
+                const eventDateOnlyStr = dateStr.split(' ')[0];
+                
+                if (filterDateFrom) {
+                    if (eventDateOnlyStr < filterDateFrom) {
+                        show = false;
+                    }
+                }
+                
+                if (filterDateTo) {
+                    if (eventDateOnlyStr > filterDateTo) {
+                        show = false;
+                    }
+                }
+            }
+            
+            if (show) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        const noMsg = document.getElementById('no-filtered-events-msg');
+        if (cards.length > 0 && visibleCount === 0) {
+            noMsg.style.display = 'block';
+        } else {
+            noMsg.style.display = 'none';
+        }
+    }
+
+    function resetFilters() {
+        document.getElementById('filter-name').value = '';
+        document.getElementById('filter-date-from').value = '';
+        document.getElementById('filter-date-to').value = '';
+        document.getElementById('filter-location').value = '';
+        filterEvents();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const filterNameInput = document.getElementById('filter-name');
+        const filterDateFromInput = document.getElementById('filter-date-from');
+        const filterDateToInput = document.getElementById('filter-date-to');
+        const filterLocationInput = document.getElementById('filter-location');
+
+        if (filterNameInput) filterNameInput.addEventListener('input', filterEvents);
+        if (filterDateFromInput) filterDateFromInput.addEventListener('change', filterEvents);
+        if (filterDateToInput) filterDateToInput.addEventListener('change', filterEvents);
+        if (filterLocationInput) filterLocationInput.addEventListener('input', filterEvents);
+    });
 </script>
 {% endblock %}

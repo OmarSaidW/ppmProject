@@ -13,11 +13,51 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('login')
     template_name = 'registration/signup.html'
 
-# --- READ (Visualizza Profilo) ---
 class UserDetailView(LoginRequiredMixin, DetailView):
     model = CustomUser
     template_name = 'users/profilo.html'
     context_object_name = 'utente_profilo'
+
+    #Funzioni base per visualizzare le mie iscrizioni a eventi con paginazione
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1':
+            from django.core.paginator import Paginator
+            from django.http import JsonResponse
+            from django.db.models import Q
+            from events.models import Event
+
+            #Visualizza eventi passati e futuri in cui l'utente è organizzatore o supervisor o si è iscritto
+            
+            events = Event.objects.filter(
+                Q(registration__user=self.object, registration__stato='ATTIVO') |
+                Q(organizers=self.object) |
+                Q(supervisor=self.object)
+            ).distinct().order_by('-date')
+            #Mi permette di caricare 30 eventi per pagina (cosi da non sovraccaricare la pagina)
+            paginator = Paginator(events, 30)
+            page_number = request.GET.get('page', 1)
+            page_obj = paginator.get_page(page_number)
+            
+            events_data = []
+            for event in page_obj:
+                events_data.append({
+                    'id': event.id,
+                    'title': event.title,
+                    'date': event.date.strftime('%d/%m/%Y %H:%M') if event.date else '',
+                    'location': event.location,
+                    'url': event.get_absolute_url()
+                })
+            
+            return JsonResponse({
+                'events': events_data,
+                'has_next': page_obj.has_next(),
+                'has_previous': page_obj.has_previous(),
+                'number': page_obj.number,
+                'num_pages': paginator.num_pages,
+            })
+        return super().get(request, *args, **kwargs)
+
 
 class UserListView(LoginRequiredMixin, ListView):
     model = CustomUser

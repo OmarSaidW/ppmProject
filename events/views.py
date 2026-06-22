@@ -23,11 +23,14 @@ class EventListView(LoginRequiredMixin, ListView):
         user = self.request.user
         if user.ruolo == 'ORGANIZER' or user.is_superuser: 
             #Se è organizzatore o superAdmin deve (per logica ) vedere tutti gli eventi
-            return Event.objects.all()
-        return Event.objects.filter( 
-            #Altrimenti (Attendee) vede solo gli eventi a cui è iscritto o invitato
-            Q(registration__user=user) | Q(invitations__invitee=user)
-        ).distinct()
+            qs = Event.objects.all()
+        else:
+            qs = Event.objects.filter( 
+                #Altrimenti (Attendee) vede solo gli eventi a cui è iscritto o invitato
+                Q(registration__user=user) | Q(invitations__invitee=user)
+            ).distinct()
+        return qs.order_by('-date')[:50]
+        # Serve per limitare il numero di eventi visualizzati per volta
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -53,7 +56,7 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         has_invitation = Invitation.objects.filter(invitee=user, event=event).exists()
         return has_registration or has_invitation
 
-    #Funzione che viene chiamata prima di renderizzare il template (come in List View)
+    #Funzioni che viene chiamata prima di renderizzare il template (come in List View)
     def _context_per_organizer(self, event, is_supervisor):
         accepted_reg = Registration.objects.filter(
             user=OuterRef('invitee'), event=OuterRef('event'), stato='ATTIVO'
@@ -261,14 +264,21 @@ class EventCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
 # --- CALENDARIO EVENTI (JSON per FullCalendar) ---
 class EventCalendarJsonView(LoginRequiredMixin, View):
+    #carica 6 mesi passati e 6 mesi futuri
     def get(self, request):
         user = request.user
+        from django.utils import timezone
+        import datetime
+        now = timezone.now()
+        six_months_ago = now - datetime.timedelta(days=180)
+        six_months_later = now + datetime.timedelta(days=180)
+
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
-            eventi = Event.objects.all()
+            eventi = Event.objects.filter(date__range=(six_months_ago, six_months_later))
         else:
             eventi = Event.objects.filter(
                 Q(registration__user=user) | Q(invitations__invitee=user)
-            ).distinct()
+            ).filter(date__range=(six_months_ago, six_months_later)).distinct()
 
         data = []
         for e in eventi:
