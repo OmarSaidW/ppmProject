@@ -3,7 +3,7 @@ from .views import (
     EventListView, EventDetailView, EventCreateView, DeleteEventView,
     JoinEventView, LeaveEventView, InviteUserView, DeleteInvitationView,
     RifiutaInvitoView, RemoveParticipantView, RemoveOrganizerView,
-    EventCalendarJsonView,
+    EventCalendarJsonView, EventUpdateView
 )
 
 urlpatterns = [
@@ -18,6 +18,7 @@ urlpatterns = [
     path('<int:pk>/elimina/', DeleteEventView.as_view(), name='elimina_evento'),
     path('<int:pk>/unisciti/', JoinEventView.as_view(), name='unisciti_evento'),
     path('<int:pk>/lascia/', LeaveEventView.as_view(), name='lascia_evento'),
+    path('<int:pk>/modifica/', EventUpdateView.as_view(), name='modifica_evento'),
 
     # Inviti
     path('<int:pk>/invita/', InviteUserView.as_view(), name='invita_utente'),

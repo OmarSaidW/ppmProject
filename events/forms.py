@@ -18,4 +18,18 @@ class EventForm(forms.ModelForm):
             'supervisor': forms.Select(attrs={'class': 'form-control'}), #Visto che è una FK faccio una select in base ai dipendenti registrati
             'organizers': forms.SelectMultiple(attrs={'class': 'form-control'}),
         }
-    
+
+class EventUpdateForm(EventForm):  #Eredita da EventForm
+    class Meta: #La classe meta specifica quali campi prendere del model form Event
+        model = Event
+        fields = ['title', 'description', 'date', 'location', 'organizers']
+
+        #Personalizzazione grafica dei campi (Widget)
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Titolo dell\'evento'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descrizione'}),
+            'date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Luogo'}),
+            'organizers': forms.SelectMultiple(attrs={'class': 'form-control'}),
+        }
+        

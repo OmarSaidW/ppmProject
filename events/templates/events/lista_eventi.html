@@ -5,16 +5,17 @@
 {% block nav_active_eventi %}active{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div>
         <h1 class="page-title">📅 Eventi</h1>
         <p class="page-subtitle">Tutti gli eventi disponibili nel sistema</p>
     </div>
-    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+    <div class="d-flex flex-wrap align-items-center gap-3">
         <!-- Toggle Lista / Calendario -->
-        <div class="view-toggle" id="view-toggle">
-            <button class="view-toggle-btn active" id="btn-list" onclick="switchView('list')">☰ Lista</button>
-            <button class="view-toggle-btn" id="btn-calendar" onclick="switchView('calendar')">🗓 Calendario</button>
+        <div class="view-toggle btn-group" id="view-toggle" role="group">
+            <button class="view-toggle-btn btn active" id="btn-list" onclick="switchView('list')">☰ Lista</button>
+            <button class="view-toggle-btn btn" id="btn-calendar" onclick="switchView('calendar')">🗓
+                Calendario</button>
         </div>
         {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
         <button class="btn btn-success" onclick="openModal()" id="add-event-btn">+ Nuovo Evento</button>
@@ -23,106 +24,122 @@
 </div>
 
 <!-- ══ FILTRI EVENTI (Front-end) ══ -->
-<div class="card" style="margin-bottom: 20px; padding: 20px;">
-    <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+<div class="card mb-4 p-4">
+    <h3 class="d-flex align-items-center gap-2" style="font-size: 1.1rem; font-weight: 700; margin-bottom: 15px;">
         <span>🔍</span> Filtra Eventi
     </h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="filter-name" style="font-size: 0.82rem; margin-bottom: 6px; font-weight: 600;">Nome Evento</label>
-            <input type="text" id="filter-name" placeholder="Cerca per nome..." style="padding: 8px 12px; font-size: 0.88rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);">
+    <div class="row g-3">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="form-group mb-0">
+                <label for="filter-name" class="form-label" style="font-size: 0.82rem; font-weight: 600;">Nome
+                    Evento</label>
+                <input type="text" id="filter-name" class="form-control form-control-sm"
+                    placeholder="Cerca per nome...">
+            </div>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="filter-date-from" style="font-size: 0.82rem; margin-bottom: 6px; font-weight: 600;">Da Data</label>
-            <input type="date" id="filter-date-from" style="padding: 8px 12px; font-size: 0.88rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="form-group mb-0">
+                <label for="filter-date-from" class="form-label" style="font-size: 0.82rem; font-weight: 600;">Da
+                    Data</label>
+                <input type="date" id="filter-date-from" class="form-control form-control-sm">
+            </div>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="filter-date-to" style="font-size: 0.82rem; margin-bottom: 6px; font-weight: 600;">A Data</label>
-            <input type="date" id="filter-date-to" style="padding: 8px 12px; font-size: 0.88rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="form-group mb-0">
+                <label for="filter-date-to" class="form-label" style="font-size: 0.82rem; font-weight: 600;">A
+                    Data</label>
+                <input type="date" id="filter-date-to" class="form-control form-control-sm">
+            </div>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
-            <label for="filter-location" style="font-size: 0.82rem; margin-bottom: 6px; font-weight: 600;">Luogo</label>
-            <input type="text" id="filter-location" placeholder="Cerca per luogo..." style="padding: 8px 12px; font-size: 0.88rem; border-radius: var(--radius-md); border: 1.5px solid var(--border-color);">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="form-group mb-0">
+                <label for="filter-location" class="form-label"
+                    style="font-size: 0.82rem; font-weight: 600;">Luogo</label>
+                <input type="text" id="filter-location" class="form-control form-control-sm"
+                    placeholder="Cerca per luogo...">
+            </div>
         </div>
     </div>
-    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+    <div class="d-flex justify-content-end gap-2 mt-3">
         <button class="btn btn-secondary btn-sm" onclick="resetFilters()">Reset Filtri</button>
     </div>
 </div>
 
 <!-- ══ VISTA LISTA ══ -->
 <div id="list-view">
-    <div id="no-filtered-events-msg" class="card" style="display:none; text-align:center; padding:48px; color:var(--text-secondary);">
+    <div id="no-filtered-events-msg" class="card text-center p-5 d-none" style="color:var(--text-secondary);">
         <p style="font-size:2.5rem; margin-bottom:12px;">🔍</p>
-        <p style="font-weight:600; font-size:1.1rem;">Nessun evento corrisponde ai criteri di ricerca</p>
+        <p class="fw-bold" style="font-size:1.1rem;">Nessun evento corrisponde ai criteri di ricerca</p>
         <p style="font-size:.9rem; margin-top:6px;">Prova a modificare i filtri impostati sopra.</p>
     </div>
 
     {% if eventi %}
-        {% for evento in eventi %}
-        <div class="card event-card" data-title="{{ evento.title }}" data-date="{{ evento.date|date:'Y-m-d H:i' }}" data-location="{{ evento.location }}">
-            <div class="card-header">
-                <div>
-                    <div class="card-title">{{ evento.title }}</div>
-                    <p class="card-body" style="margin-top:6px;">{{ evento.description }}</p>
-                </div>
+    {% for evento in eventi %}
+    <div class="card event-card mb-3" data-title="{{ evento.title }}" data-date="{{ evento.date|date:'Y-m-d H:i' }}"
+        data-location="{{ evento.location }}">
+        <div class="card-header">
+            <div>
+                <div class="card-title">{{ evento.title }}</div>
+                <p class="card-body mb-0" style="margin-top:6px;">{{ evento.description }}</p>
             </div>
-            <div class="meta-info">
-                <p>📆 <strong>Quando:</strong> {{ evento.date|date:"d M Y - H:i" }}</p>
-                <p>📍 <strong>Dove:</strong> {{ evento.location }}</p>
-                <p>👤 <strong>Supervisor:</strong>
-                    {% if evento.supervisor %}{{ evento.supervisor.username }}{% else %}Nessuno{% endif %}
-                </p>
-                <p>🤝 <strong>Organizzatori:</strong>
-                    {% for org in evento.organizers.all %}{{ org.username }}{% if not forloop.last %}, {% endif %}
-                    {% empty %}Nessuno{% endfor %}
-                </p>
-            </div>
-            <a href="{{ evento.get_absolute_url }}" class="btn btn-sm">Vedi Dettagli →</a>
         </div>
-        {% endfor %}
-    {% else %}
-        <div class="card" style="text-align:center; padding:48px; color:var(--text-secondary);">
-            <p style="font-size:2.5rem; margin-bottom:12px;">🗓</p>
-            <p style="font-weight:600; font-size:1.1rem;">Nessun evento disponibile</p>
-            <p style="font-size:.9rem; margin-top:6px;">
-                {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
-                Crea il primo evento con il pulsante in alto!
-                {% else %}
-                Non hai ancora inviti o iscrizioni a eventi.
-                {% endif %}
+        <div class="meta-info">
+            <p>📆 <strong>Quando:</strong> {{ evento.date|date:"d M Y - H:i" }}</p>
+            <p>📍 <strong>Dove:</strong> {{ evento.location }}</p>
+            <p>👤 <strong>Supervisor:</strong>
+                {% if evento.supervisor %}{{ evento.supervisor.username }}{% else %}Nessuno{% endif %}
+            </p>
+            <p>🤝 <strong>Organizzatori:</strong>
+                {% for org in evento.organizers.all %}{{ org.username }}{% if not forloop.last %}, {% endif %}
+                {% empty %}Nessuno{% endfor %}
             </p>
         </div>
+        <a href="{{ evento.get_absolute_url }}" class="btn btn-sm">Vedi Dettagli →</a>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card text-center p-5" style="color:var(--text-secondary);">
+        <p style="font-size:2.5rem; margin-bottom:12px;">🗓</p>
+        <p class="fw-bold" style="font-size:1.1rem;">Nessun evento disponibile</p>
+        <p style="font-size:.9rem; margin-top:6px;">
+            {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
+            Crea il primo evento con il pulsante in alto!
+            {% else %}
+            Non hai ancora inviti o iscrizioni a eventi.
+            {% endif %}
+        </p>
+    </div>
     {% endif %}
 </div>
 
 <!-- ══ VISTA CALENDARIO ══ -->
 <div id="calendar-view">
-    <div class="card" style="padding:20px;">
+    <div class="card p-4">
         <div id="fullcalendar"></div>
     </div>
 </div>
 
 <!-- ══ MODAL CREA EVENTO ══ -->
 {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
-<div id="addEventModal" class="modal-overlay">
-    <div class="modal-content">
+<div id="addEventModal" class="modal-overlay modal" tabindex="-1">
+    <div class="modal-content modal-dialog-centered" style="margin:auto;">
         <div class="modal-header">
-            <h3>➕ Nuovo Evento</h3>
-            <button class="modal-close" onclick="closeModal()">×</button>
+            <h3 class="modal-title">➕ Nuovo Evento</h3>
+            <button type="button" class="modal-close btn-close" onclick="closeModal()" aria-label="Chiudi">×</button>
         </div>
         <form action="{% url 'crea_evento' %}" method="post">
             {% csrf_token %}
-            <div style="display:flex; flex-direction:column; gap:4px;">
+            <div class="d-flex flex-column gap-1">
                 {% for field in form %}
                 <div class="form-group">
-                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
                     {{ field }}
                     {% if field.help_text %}
-                    <small style="color:var(--text-secondary); display:block; margin-top:4px;">{{ field.help_text }}</small>
+                    <small class="form-text d-block mt-1" style="color:var(--text-secondary);">{{ field.help_text
+                        }}</small>
                     {% endif %}
                     {% for error in field.errors %}
-                    <span style="color:var(--color-danger); font-size:.85rem; display:block; margin-top:4px;">{{ error }}</span>
+                    <span class="d-block mt-1" style="color:var(--color-danger); font-size:.85rem;">{{ error }}</span>
                     {% endfor %}
                 </div>
                 {% endfor %}
@@ -147,7 +164,7 @@
     // ── Modal ──
     function openModal() { document.getElementById('addEventModal').classList.add('active'); }
     function closeModal() { document.getElementById('addEventModal').classList.remove('active'); }
-    window.onclick = function(e) {
+    window.onclick = function (e) {
         var m = document.getElementById('addEventModal');
         if (m && e.target === m) closeModal();
     };
@@ -155,9 +172,9 @@
     // ── Vista Toggle ──
     function switchView(view) {
         const listView = document.getElementById('list-view');
-        const calView  = document.getElementById('calendar-view');
-        const btnList  = document.getElementById('btn-list');
-        const btnCal   = document.getElementById('btn-calendar');
+        const calView = document.getElementById('calendar-view');
+        const btnList = document.getElementById('btn-list');
+        const btnCal = document.getElementById('btn-calendar');
         if (view === 'list') {
             listView.classList.remove('hidden');
             calView.classList.remove('visible');
@@ -185,7 +202,7 @@
             height: 'auto',
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
             events: '{% url "eventi_json" %}',
-            eventClick: function(info) {
+            eventClick: function (info) {
                 window.location.href = info.event.url;
                 info.jsEvent.preventDefault();
             },
@@ -203,38 +220,38 @@
 
         const cards = document.querySelectorAll('.event-card');
         let visibleCount = 0;
-        
+
         cards.forEach(card => {
             const title = card.getAttribute('data-title').toLowerCase();
             const dateStr = card.getAttribute('data-date'); // Y-m-d H:i
             const location = card.getAttribute('data-location').toLowerCase();
-            
+
             let show = true;
-            
+
             if (filterName && !title.includes(filterName)) {
                 show = false;
             }
-            
+
             if (filterLocation && !location.includes(filterLocation)) {
                 show = false;
             }
-            
+
             if (dateStr) {
                 const eventDateOnlyStr = dateStr.split(' ')[0];
-                
+
                 if (filterDateFrom) {
                     if (eventDateOnlyStr < filterDateFrom) {
                         show = false;
                     }
                 }
-                
+
                 if (filterDateTo) {
                     if (eventDateOnlyStr > filterDateTo) {
                         show = false;
                     }
                 }
             }
-            
+
             if (show) {
                 card.style.display = '';
                 visibleCount++;
@@ -242,7 +259,7 @@
                 card.style.display = 'none';
             }
         });
-        
+
         const noMsg = document.getElementById('no-filtered-events-msg');
         if (cards.length > 0 && visibleCount === 0) {
             noMsg.style.display = 'block';

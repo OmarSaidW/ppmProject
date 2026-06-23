@@ -4,44 +4,46 @@
 {% block title %}{{ evento.title }} – EventHub{% endblock %}
 
 {% block content %}
-<div style="max-width:780px; margin:0 auto;">
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9 col-xl-8">
 
-    <!-- Testata -->
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">{{ evento.title }}</h1>
-            <p class="page-subtitle">{{ evento.description }}</p>
-        </div>
-    </div>
+            <!-- Testata -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">{{ evento.title }}</h1>
+                    <p class="page-subtitle">{{ evento.description }}</p>
+                </div>
+            </div>
 
-    <div class="card">
-        <div class="meta-info">
-            <p>📆 <strong>Data e Ora:</strong> {{ evento.date|date:"d M Y - H:i" }}</p>
-            <p>📍 <strong>Luogo:</strong> {{ evento.location }}</p>
-            <p>👤 <strong>Supervisor:</strong>
-                {% if evento.supervisor %}{{ evento.supervisor.username }}{% else %}Nessuno{% endif %}
-            </p>
-            <p>🤝 <strong>Team Organizzatori:</strong>
-                {% for org in evento.organizers.all %}
-                    {{ org.username }}{% if not forloop.last %}, {% endif %}
-                {% empty %}Nessuno{% endfor %}
-            </p>
-        </div>
+            <div class="card">
+                <div class="meta-info">
+                    <p>📆 <strong>Data e Ora:</strong> {{ evento.date|date:"d M Y - H:i" }}</p>
+                    <p>📍 <strong>Luogo:</strong> {{ evento.location }}</p>
+                    <p>👤 <strong>Supervisor:</strong>
+                        {% if evento.supervisor %}{{ evento.supervisor.username }}{% else %}Nessuno{% endif %}
+                    </p>
+                    <p>🤝 <strong>Team Organizzatori:</strong>
+                        {% for org in evento.organizers.all %}
+                        {{ org.username }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}Nessuno{% endfor %}
+                    </p>
+                </div>
 
-        <!-- ══ AZIONI UTENTE ══ -->
-        <hr>
-        <div style="display:flex; flex-direction:column; gap:10px;">
+                <!-- ══ AZIONI UTENTE ══ -->
+                <hr>
+                <div class="d-flex flex-column gap-2">
 
-            {% if request.user.ruolo == 'ATTENDEE' %}
-                {% if mia_registrazione %}
+                    {% if request.user.ruolo == 'ATTENDEE' %}
+                    {% if mia_registrazione %}
                     <div class="info-box info-box-success">✓ Sei iscritto a questo evento.</div>
                     <form action="{% url 'lascia_evento' evento.pk %}" method="post">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger">↩ Lascia l'Evento</button>
                     </form>
-                {% elif mio_invito %}
+                    {% elif mio_invito %}
                     <div class="info-box info-box-info">📨 Sei stato invitato a questo evento!</div>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <div class="d-flex gap-2 flex-wrap">
                         <form action="{% url 'unisciti_evento' evento.pk %}" method="post">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-success">✓ Accetta e Unisciti</button>
@@ -51,171 +53,182 @@
                             <button type="submit" class="btn btn-danger">✗ Rifiuta Invito</button>
                         </form>
                     </div>
-                {% else %}
+                    {% else %}
                     <div class="info-box info-box-warning">⚠ Non hai un invito attivo per questo evento.</div>
-                {% endif %}
+                    {% endif %}
 
-            {% elif request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
-                {% if not user_is_joined %}
+                    {% elif request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
+                    {% if not user_is_joined %}
                     <form action="{% url 'unisciti_evento' evento.pk %}" method="post">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-success">+ Unisciti come Organizzatore</button>
                     </form>
-                {% else %}
+                    {% else %}
                     <div class="info-box info-box-info">🤝 Fai parte del team organizzativo di questo evento.</div>
-                {% endif %}
-                {% if is_supervisor %}
+                    {% endif %}
+                    {% if is_supervisor or request.user.is_superuser or user_is_joined %}
+                    <a href="{% url 'modifica_evento' evento.pk %}"
+                        class="btn btn-secondary d-block text-center text-decoration-none mb-2">✏ Modifica Evento</a>
+                    {% endif %}
+                    {% if is_supervisor %}
                     <form action="{% url 'elimina_evento' evento.pk %}" method="post"
-                          onsubmit="return confirm('Eliminare questo evento? Azione irreversibile.')">
+                        onsubmit="return confirm('Eliminare questo evento? Azione irreversibile.')" class="m-0">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">🗑 Elimina Evento</button>
+                        <button type="submit" class="btn btn-danger w-100">🗑 Elimina Evento</button>
                     </form>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ══ PARTECIPANTI ══ -->
+            <div class="card">
+                <h3 class="section-title mt-0">👥 Ospiti Iscritti</h3>
+                <ul class="list-unstyled m-0">
+                    {% for reg in partecipanti %}
+                    <li class="list-item">
+                        <span>
+                            <strong>{{ reg.user.username }}</strong>
+                            <span class="badge badge-attivo ms-2">Attivo</span>
+                            <span class="ms-2" style="font-size:.82em; color:var(--text-muted);">
+                                dal {{ reg.registration_date|date:"d M Y" }}
+                            </span>
+                        </span>
+                        {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
+                        <div class="actions">
+                            <form action="{% url 'rimuovi_partecipante' evento.pk reg.pk %}" method="post"
+                                onsubmit="return confirm('Confermi la rimozione di {{ reg.user.username }}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-xs btn-xs-danger">Rimuovi</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </li>
+                    {% empty %}
+                    <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">
+                        Nessun partecipante iscritto.
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
+                {% if usciti %}
+                <h4 class="section-title" style="font-size:.9rem; color:var(--text-secondary);">Ha lasciato l'evento:
+                </h4>
+                <ul class="list-unstyled m-0">
+                    {% for reg in usciti %}
+                    <li class="list-item" style="opacity:.65;">
+                        <span>
+                            <strong>{{ reg.user.username }}</strong>
+                            <span class="badge badge-uscito ms-2">Uscito</span>
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
                 {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- ══ GESTIONE INVITI (Organizer + Supervisor) ══ -->
+            {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
+            <div class="card">
+                <h3 class="section-title mt-0">📨 Gestione Inviti</h3>
+                <ul class="list-unstyled mb-4 mt-0">
+                    {% for invito in inviti %}
+                    <li class="list-item">
+                        <span>
+                            <strong>{{ invito.invitee.username }}</strong>
+                            — invitato da {{ invito.inviter.username }}
+                            {% if invito.accettato %}
+                            <span class="badge badge-attivo ms-2">Accettato</span>
+                            {% else %}
+                            <span class="badge badge-pending ms-2">In attesa</span>
+                            {% endif %}
+                        </span>
+                        <div class="actions">
+                            <span style="font-size:.82em; color:var(--text-muted);">{{ invito.invited_at|date:"d M Y"
+                                }}</span>
+                            <form action="{% url 'elimina_invito' evento.pk invito.pk %}" method="post"
+                                onsubmit="return confirm('Confermi la cancellazione dell invito per {{ invito.invitee.username }}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-xs btn-xs-danger">Elimina</button>
+                            </form>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">Nessun invito attivo.
+                    </li>
+                    {% endfor %}
+                </ul>
+
+                {% if is_supervisor and inviti_rifiutati %}
+                <h4 class="section-title" style="font-size:.9rem; color:var(--text-secondary);">Inviti rifiutati:</h4>
+                <ul class="list-unstyled mb-4 mt-0">
+                    {% for invito in inviti_rifiutati %}
+                    <li class="list-item" style="opacity:.65;">
+                        <strong>{{ invito.invitee.username }}</strong>
+                        <span class="badge badge-rifiutato ms-2">Rifiutato</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if invitabili %}
+                <form action="{% url 'invita_utente' evento.pk %}" method="post" class="mt-2 p-3 rounded"
+                    style="background:#f8fafc; border:1px solid var(--border-color);">
+                    {% csrf_token %}
+                    <label for="invitee_select" class="form-label fw-semibold d-block mb-2" style="font-size:.9rem;">
+                        Seleziona Attendee da Invitare:
+                    </label>
+                    <div class="d-flex gap-2">
+                        <select name="invitee_id" id="invitee_select" class="form-control" required>
+                            <option value="">-- Seleziona utente --</option>
+                            {% for utente in invitabili %}
+                            <option value="{{ utente.id }}">{{ utente.username }} ({{ utente.email }})</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-success text-nowrap">📨 Invita</button>
+                    </div>
+                </form>
+                {% else %}
+                <p style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">
+                    Tutti gli Attendee sono già stati invitati o iscritti.
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- ══ TEAM ORGANIZZATORI (solo Supervisor) ══ -->
+            {% if is_supervisor %}
+            <div class="card">
+                <h3 class="section-title mt-0">🤝 Team Organizzatori</h3>
+                <ul class="list-unstyled m-0">
+                    {% for org in organizzatori %}
+                    <li class="list-item">
+                        <span><strong>{{ org.username }}</strong></span>
+                        <div class="actions">
+                            {% if org != evento.supervisor %}
+                            <form action="{% url 'rimuovi_organizzatore' evento.pk org.pk %}" method="post"
+                                onsubmit="return confirm('Rimuovere {{ org.username }} dagli organizzatori?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-xs btn-xs-danger">Rimuovi</button>
+                            </form>
+                            {% else %}
+                            <span class="badge badge-organizer">Supervisor</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">Nessun organizzatore.
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
             {% endif %}
+            {% endif %}
+
+            <a href="{% url 'lista_eventi' %}" class="back-link">← Torna alla lista degli eventi</a>
+
         </div>
     </div>
-
-    <!-- ══ PARTECIPANTI ══ -->
-    <div class="card">
-        <h3 class="section-title" style="margin-top:0;">👥 Ospiti Iscritti</h3>
-        <ul style="list-style:none; padding:0; margin:0;">
-            {% for reg in partecipanti %}
-            <li class="list-item">
-                <span>
-                    <strong>{{ reg.user.username }}</strong>
-                    <span class="badge badge-attivo" style="margin-left:8px;">Attivo</span>
-                    <span style="font-size:.82em; color:var(--text-muted); margin-left:8px;">
-                        dal {{ reg.registration_date|date:"d M Y" }}
-                    </span>
-                </span>
-                {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
-                <div class="actions">
-                    <form action="{% url 'rimuovi_partecipante' evento.pk reg.pk %}" method="post"
-                          onsubmit="return confirm('Confermi la rimozione di {{ reg.user.username }}?')">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-xs btn-xs-danger">Rimuovi</button>
-                    </form>
-                </div>
-                {% endif %}
-            </li>
-            {% empty %}
-            <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">
-                Nessun partecipante iscritto.
-            </li>
-            {% endfor %}
-        </ul>
-
-        {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
-            {% if usciti %}
-            <h4 class="section-title" style="font-size:.9rem; color:var(--text-secondary);">Ha lasciato l'evento:</h4>
-            <ul style="list-style:none; padding:0; margin:0;">
-                {% for reg in usciti %}
-                <li class="list-item" style="opacity:.65;">
-                    <span>
-                        <strong>{{ reg.user.username }}</strong>
-                        <span class="badge badge-uscito" style="margin-left:8px;">Uscito</span>
-                    </span>
-                </li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-        {% endif %}
-    </div>
-
-    <!-- ══ GESTIONE INVITI (Organizer + Supervisor) ══ -->
-    {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
-    <div class="card">
-        <h3 class="section-title" style="margin-top:0;">📨 Gestione Inviti</h3>
-        <ul style="list-style:none; padding:0; margin:0 0 16px 0;">
-            {% for invito in inviti %}
-            <li class="list-item">
-                <span>
-                    <strong>{{ invito.invitee.username }}</strong>
-                    — invitato da {{ invito.inviter.username }}
-                    {% if invito.accettato %}
-                        <span class="badge badge-attivo" style="margin-left:8px;">Accettato</span>
-                    {% else %}
-                        <span class="badge badge-pending" style="margin-left:8px;">In attesa</span>
-                    {% endif %}
-                </span>
-                <div class="actions">
-                    <span style="font-size:.82em; color:var(--text-muted);">{{ invito.invited_at|date:"d M Y" }}</span>
-                    <form action="{% url 'elimina_invito' evento.pk invito.pk %}" method="post"
-                          onsubmit="return confirm('Confermi la cancellazione dell invito per {{ invito.invitee.username }}?')">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-xs btn-xs-danger">Elimina</button>
-                    </form>
-                </div>
-            </li>
-            {% empty %}
-            <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">Nessun invito attivo.</li>
-            {% endfor %}
-        </ul>
-
-        {% if is_supervisor and inviti_rifiutati %}
-        <h4 class="section-title" style="font-size:.9rem; color:var(--text-secondary);">Inviti rifiutati:</h4>
-        <ul style="list-style:none; padding:0; margin:0 0 16px 0;">
-            {% for invito in inviti_rifiutati %}
-            <li class="list-item" style="opacity:.65;">
-                <strong>{{ invito.invitee.username }}</strong>
-                <span class="badge badge-rifiutato" style="margin-left:8px;">Rifiutato</span>
-            </li>
-            {% endfor %}
-        </ul>
-        {% endif %}
-
-        {% if invitabili %}
-        <form action="{% url 'invita_utente' evento.pk %}" method="post"
-              style="background:#f8fafc; padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color); margin-top:8px;">
-            {% csrf_token %}
-            <label for="invitee_select" style="font-weight:600; font-size:.9rem; display:block; margin-bottom:8px;">
-                Seleziona Attendee da Invitare:
-            </label>
-            <div style="display:flex; gap:10px;">
-                <select name="invitee_id" id="invitee_select" class="form-control" required>
-                    <option value="">-- Seleziona utente --</option>
-                    {% for utente in invitabili %}
-                    <option value="{{ utente.id }}">{{ utente.username }} ({{ utente.email }})</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-success" style="white-space:nowrap;">📨 Invita</button>
-            </div>
-        </form>
-        {% else %}
-        <p style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">
-            Tutti gli Attendee sono già stati invitati o iscritti.
-        </p>
-        {% endif %}
-    </div>
-
-    <!-- ══ TEAM ORGANIZZATORI (solo Supervisor) ══ -->
-    {% if is_supervisor %}
-    <div class="card">
-        <h3 class="section-title" style="margin-top:0;">🤝 Team Organizzatori</h3>
-        <ul style="list-style:none; padding:0; margin:0;">
-            {% for org in organizzatori %}
-            <li class="list-item">
-                <span><strong>{{ org.username }}</strong></span>
-                <div class="actions">
-                    {% if org != evento.supervisor %}
-                    <form action="{% url 'rimuovi_organizzatore' evento.pk org.pk %}" method="post"
-                          onsubmit="return confirm('Rimuovere {{ org.username }} dagli organizzatori?')">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-xs btn-xs-danger">Rimuovi</button>
-                    </form>
-                    {% else %}
-                    <span class="badge badge-organizer">Supervisor</span>
-                    {% endif %}
-                </div>
-            </li>
-            {% empty %}
-            <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">Nessun organizzatore.</li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-    {% endif %}
-
-    <a href="{% url 'lista_eventi' %}" class="back-link">← Torna alla lista degli eventi</a>
 </div>
 {% endblock %}

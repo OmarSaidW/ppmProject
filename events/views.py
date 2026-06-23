@@ -1,4 +1,4 @@
-from django.views.generic import ListView, DetailView, CreateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import get_user_model
@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q, Exists, OuterRef
 from .models import Event, Registration, Invitation
-from .forms import EventForm
+from .forms import EventForm, EventUpdateForm
 
 # Recuperiamo il modello utente personalizzato in modo sicuro per Django
 CustomUser = get_user_model()
@@ -259,6 +259,26 @@ class EventCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
     def test_func(self):
         return self.request.user.ruolo == 'ORGANIZER' or self.request.user.is_superuser
+
+
+# --- MODIFICARE UN EVENTO ---
+class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Event
+    form_class = EventUpdateForm
+    template_name = 'events/modifica_evento.html'
+
+    def get_success_url(self):
+        messages.success(self.request, "Evento modificato con successo!")
+        return reverse_lazy('dettaglio_evento', kwargs={'pk': self.object.pk})
+
+    def test_func(self):
+        event = self.get_object()
+        user = self.request.user
+        is_organizer = event.organizers.filter(id=user.id).exists()
+        is_supervisor = event.supervisor == user
+        return is_supervisor or is_organizer or user.is_superuser
+
+
 
 
 

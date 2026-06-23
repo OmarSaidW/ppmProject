@@ -13,6 +13,7 @@ class SignUpView(CreateView):
     success_url = reverse_lazy('login')
     template_name = 'registration/signup.html'
 
+@login_required
 class UserDetailView(LoginRequiredMixin, DetailView):
     model = CustomUser
     template_name = 'users/profilo.html'
@@ -58,7 +59,7 @@ class UserDetailView(LoginRequiredMixin, DetailView):
             })
         return super().get(request, *args, **kwargs)
 
-
+@login_required
 class UserListView(LoginRequiredMixin, ListView):
     model = CustomUser
     template_name = 'users/lista_utenti.html'
@@ -85,6 +86,7 @@ class OrganizerUpdateUserView(LoginRequiredMixin, UserPassesTestMixin, UpdateVie
 
 
 # --- UPDATE: Modifica Profilo ---
+@login_required
 class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = CustomUser
     form_class = UserProfileUpdateForm  # Modifica solo email e telefono

@@ -172,3 +172,51 @@ class EventAppTests(TestCase):
         self.assertIn("Organizer Event", titles)
         self.assertIn("Supervisor Event", titles)
 
+    def test_event_update_permissions(self):
+        """Test permissions for EventUpdateView."""
+        now = timezone.now()
+        event = Event.objects.create(
+            title="Edit Test Event",
+            description="Original Description",
+            date=now,
+            location="Original Location",
+            supervisor=self.organizer
+        )
+        
+        # 1. Attendee tries to access edit page -> 403 Forbidden
+        response = self.client.get(reverse('modifica_evento', kwargs={'pk': event.pk}))
+        self.assertEqual(response.status_code, 403)
+        
+        response = self.client.post(reverse('modifica_evento', kwargs={'pk': event.pk}), {
+            'title': 'New Title',
+            'description': 'New Description',
+            'date': (now + datetime.timedelta(days=1)).strftime('%Y-%m-%dT%H:%M'),
+            'location': 'New Location',
+        })
+        self.assertEqual(response.status_code, 403)
+        
+        # 2. Login as event organizer and try to edit -> 200 OK and successful redirect
+        org_user_2 = User.objects.create_user(username='org_user_2', password='password123', ruolo='ORGANIZER')
+        event.organizers.add(org_user_2)
+        
+        client_org = Client()
+        client_org.login(username='org_user_2', password='password123')
+        
+        response = client_org.get(reverse('modifica_evento', kwargs={'pk': event.pk}))
+        self.assertEqual(response.status_code, 200)
+        
+        new_date = now + datetime.timedelta(days=1)
+        response = client_org.post(reverse('modifica_evento', kwargs={'pk': event.pk}), {
+            'title': 'Updated Title',
+            'description': 'Updated Description',
+            'date': new_date.strftime('%Y-%m-%dT%H:%M'),
+            'location': 'Updated Location',
+            'organizers': [org_user_2.id]
+        })
+        self.assertRedirects(response, reverse('dettaglio_evento', kwargs={'pk': event.pk}))
+        
+        event.refresh_from_db()
+        self.assertEqual(event.title, 'Updated Title')
+        self.assertEqual(event.description, 'Updated Description')
+        self.assertEqual(event.location, 'Updated Location')
+

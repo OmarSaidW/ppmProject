@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'events/css/style.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
@@ -17,31 +18,44 @@
 <body>
 
     <!-- ══ NAVBAR FISSA ══ -->
-    <nav class="navbar" id="main-navbar">
-        <div class="navbar-brand">
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top px-3 px-md-4" id="main-navbar">
+        <div class="navbar-brand d-flex align-items-center gap-2">
             <span class="navbar-logo">🗓</span>
             <span class="navbar-title">Gestionale eventi</span>
         </div>
-        <div class="navbar-links">
-            <a href="{% url 'lista_eventi' %}" class="nav-link {% block nav_active_eventi %}{% endblock %}">
-                <span class="nav-icon">📅</span> Eventi
-            </a>
-            <a href="{% url 'lista_utenti' %}" class="nav-link {% block nav_active_utenti %}{% endblock %}">
-                <span class="nav-icon">👥</span> Utenti
-            </a>
-        </div>
-        <div class="navbar-right">
-            <a href="{% url 'dettaglio_profilo' user.pk %}" class="nav-user-badge" id="nav-profile-link">
-                <span class="nav-avatar">{{ user.username|slice:":1"|upper }}</span>
-                <span class="nav-username">{{ user.username }}</span>
-                <span class="nav-role-chip">{{ user.ruolo }}</span>
-            </a>
-            <form action="{% url 'logout' %}" method="post" style="display: inline; margin: 0;">
-                {% csrf_token %}
-                <button type="submit" class="nav-logout-btn" id="nav-logout-btn">
-                    <span>⏻</span> Esci
-                </button>
-            </form>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+            aria-controls="navbarContent" aria-expanded="false" aria-label="Apri menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto gap-1 mt-2 mt-md-0">
+                <li class="nav-item">
+                    <a href="{% url 'lista_eventi' %}" class="nav-link {% block nav_active_eventi %}{% endblock %}">
+                        <span class="nav-icon">📅</span> Eventi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'lista_utenti' %}" class="nav-link {% block nav_active_utenti %}{% endblock %}">
+                        <span class="nav-icon">👥</span> Utenti
+                    </a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2 mt-3 mt-md-0 mb-2 mb-md-0">
+                <a href="{% url 'dettaglio_profilo' user.pk %}" class="nav-user-badge" id="nav-profile-link">
+                    <span class="nav-avatar">{{ user.username|slice:":1"|upper }}</span>
+                    <span class="nav-username">{{ user.username }}</span>
+                    <span class="nav-role-chip">{{ user.ruolo }}</span>
+                </a>
+                <form action="{% url 'logout' %}" method="post" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-logout-btn" id="nav-logout-btn">
+                        <span>⏻</span> Esci
+                    </button>
+                </form>
+            </div>
         </div>
     </nav>
 
@@ -63,12 +77,12 @@
     </div>
 
     <script>
-        // Auto-chiudi i messaggi dopo 5 secondi
         setTimeout(() => {
             const msgs = document.getElementById('global-messages');
             if (msgs) msgs.style.opacity = '0';
         }, 5000);
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_scripts %}{% endblock %}
 
 </body>

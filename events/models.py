@@ -32,6 +32,7 @@ class Event(models.Model):
         settings.AUTH_USER_MODEL, 
         related_name='organized_events'
     )
+    stato = models.IntegerField(default=0)
     #Definita da ai per permettere di ritornare all'url del dettaglio evento
     #Utile per redirect
     def get_absolute_url(self):

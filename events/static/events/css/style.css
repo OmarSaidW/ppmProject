@@ -9,9 +9,9 @@
     --text-muted: #94a3b8;
 
     /* Brand */
-    --color-primary: #025c23;
+    --color-primary: #C9A227;
     --color-primary-hover: #10962d;
-    --color-primary-light: #13752d;
+    --color-primary-light: #025c23;
     --color-success: #10b981;
     --color-success-hover: #059669;
     --color-success-light: #d1fae5;
@@ -24,6 +24,7 @@
 
     /* Navbar */
     --nav-bg: #000000;
+    --nav-bg-open: #0f172a;
     --nav-height: 60px;
 
     /* Borders & Shadows */
@@ -55,28 +56,13 @@ body {
 
 /* ═══════════════════════════════════════
    NAVBAR
+   Markup Bootstrap nativo: .navbar, .navbar-toggler,
+   .collapse.navbar-collapse, .navbar-nav, .nav-link
    ═══════════════════════════════════════ */
 .navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: var(--nav-height);
+    min-height: var(--nav-height);
     background: var(--nav-bg);
-    display: flex;
-    align-items: center;
-    padding: 0 24px;
-    gap: 24px;
-    z-index: 1000;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, .3);
-}
-
-.navbar-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    flex-shrink: 0;
+    box-shadow: var(--shadow-md);
 }
 
 .navbar-logo {
@@ -90,28 +76,19 @@ body {
     letter-spacing: -.3px;
 }
 
-.navbar-links {
+.navbar .nav-link {
     display: flex;
     align-items: center;
-    gap: 4px;
-    flex: 1;
-}
-
-.nav-link {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
+    gap: .4rem;
     border-radius: var(--radius-sm);
     color: #94a3b8;
-    text-decoration: none;
     font-weight: 500;
     font-size: .92rem;
-    transition: color .2s, background .2s;
+    transition: color .2s, background-color .2s;
 }
 
-.nav-link:hover,
-.nav-link.active {
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
     color: #fff;
     background: rgba(255, 255, 255, .1);
 }
@@ -120,22 +97,15 @@ body {
     font-size: 1rem;
 }
 
-.navbar-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: auto;
-}
-
 .nav-user-badge {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 5px 12px;
+    gap: .5rem;
+    padding: .3rem .75rem;
     border-radius: 999px;
     background: rgba(255, 255, 255, .08);
     text-decoration: none;
-    transition: background .2s;
+    transition: background-color .2s;
     border: 1px solid rgba(255, 255, 255, .1);
 }
 
@@ -168,7 +138,7 @@ body {
     color: #a5b4fc;
     font-size: .72rem;
     font-weight: 700;
-    padding: 2px 8px;
+    padding: .1rem .5rem;
     border-radius: 999px;
     letter-spacing: .3px;
 }
@@ -176,8 +146,8 @@ body {
 .nav-logout-btn {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 6px 14px;
+    gap: .3rem;
+    padding: .4rem .9rem;
     background: rgba(239, 68, 68, .15);
     border: 1px solid rgba(239, 68, 68, .3);
     border-radius: var(--radius-sm);
@@ -185,12 +155,42 @@ body {
     font-weight: 600;
     font-size: .88rem;
     cursor: pointer;
-    transition: background .2s, color .2s;
+    transition: background-color .2s, color .2s;
 }
 
 .nav-logout-btn:hover {
     background: rgba(239, 68, 68, .3);
     color: #fff;
+}
+
+/* Toggler hamburger: usiamo l'icona nativa di Bootstrap,
+   solo ricolorata per stare bene su sfondo scuro */
+.navbar-toggler {
+    border: none;
+    padding: .35rem .5rem;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Quando il menu è aperto su mobile: sfondo scuro dedicato,
+   leggermente diverso dal nero della navbar, con ombra,
+   così risulta visibile sopra il bianco della pagina sottostante */
+@media (max-width: 767.98px) {
+
+    .navbar-collapse.show,
+    .navbar-collapse.collapsing {
+        background: var(--nav-bg-open);
+        margin: 0 -1rem;
+        padding: .5rem 1rem 1rem;
+        box-shadow: var(--shadow-lg);
+        border-top: 1px solid rgba(255, 255, 255, .08);
+    }
 }
 
 /* ═══════════════════════════════════════
