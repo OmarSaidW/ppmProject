@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Event, Registration, Invitation
+from .models import Event, Registration, Invitation, EventoPrivato, PublicEvent
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):

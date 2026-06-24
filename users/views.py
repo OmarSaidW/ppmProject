@@ -33,7 +33,7 @@ class UserDetailView(LoginRequiredMixin, DetailView):
                 Q(registration__user=self.object, registration__stato='ATTIVO') |
                 Q(organizers=self.object) |
                 Q(supervisor=self.object)
-            ).distinct().order_by('-date')
+            ).distinct().order_by('-date_time_start')
             #Mi permette di caricare 30 eventi per pagina (cosi da non sovraccaricare la pagina)
             paginator = Paginator(events, 30)
             page_number = request.GET.get('page', 1)
@@ -44,7 +44,7 @@ class UserDetailView(LoginRequiredMixin, DetailView):
                 events_data.append({
                     'id': event.id,
                     'title': event.title,
-                    'date': event.date.strftime('%d/%m/%Y %H:%M') if event.date else '',
+                    'date': event.date_time_start.strftime('%d/%m/%Y %H:%M') if event.date_time_start else '',
                     'location': event.location,
                     'url': event.get_absolute_url()
                 })

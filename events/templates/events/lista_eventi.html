@@ -18,7 +18,7 @@
                 Calendario</button>
         </div>
         {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
-        <button class="btn btn-success" onclick="openModal()" id="add-event-btn">+ Nuovo Evento</button>
+        <a href="{% url 'crea_evento' %}" class="btn btn-success" id="add-event-btn">+ Nuovo Evento</a>
         {% endif %}
     </div>
 </div>
@@ -75,26 +75,30 @@
 
     {% if eventi %}
     {% for evento in eventi %}
-    <div class="card event-card mb-3" data-title="{{ evento.title }}" data-date="{{ evento.date|date:'Y-m-d H:i' }}"
+    <div class="card event-card mb-3" data-title="{{ evento.title }}" data-date="{{ evento.date_time_start|date:'Y-m-d H:i' }}"
         data-location="{{ evento.location }}">
-        <div class="card-header">
-            <div>
-                <div class="card-title">{{ evento.title }}</div>
-                <p class="card-body mb-0" style="margin-top:6px;">{{ evento.description }}</p>
+        <div class="event-card-inner">
+            <div class="event-date-chip">
+                <span class="event-day">{{ evento.date_time_start|date:"d" }}</span>
+                <span class="event-month">{{ evento.date_time_start|date:"M" }}</span>
+            </div>
+            <div class="event-content">
+                <div class="event-title">{{ evento.title }}</div>
+                {% if evento.description %}
+                <div class="event-description">{{ evento.description }}</div>
+                {% endif %}
+                <div class="event-meta-row">
+                    <span>📍 {{ evento.location }}</span>
+                    <span>🕐 {{ evento.date_time_start|date:"H:i" }}</span>
+                    {% if evento.supervisor %}
+                    <span>👤 {{ evento.supervisor.username }}</span>
+                    {% endif %}
+                </div>
+                <div class="event-footer">
+                    <a href="{{ evento.get_absolute_url }}" class="btn btn-sm">Vedi Dettagli →</a>
+                </div>
             </div>
         </div>
-        <div class="meta-info">
-            <p>📆 <strong>Quando:</strong> {{ evento.date|date:"d M Y - H:i" }}</p>
-            <p>📍 <strong>Dove:</strong> {{ evento.location }}</p>
-            <p>👤 <strong>Supervisor:</strong>
-                {% if evento.supervisor %}{{ evento.supervisor.username }}{% else %}Nessuno{% endif %}
-            </p>
-            <p>🤝 <strong>Organizzatori:</strong>
-                {% for org in evento.organizers.all %}{{ org.username }}{% if not forloop.last %}, {% endif %}
-                {% empty %}Nessuno{% endfor %}
-            </p>
-        </div>
-        <a href="{{ evento.get_absolute_url }}" class="btn btn-sm">Vedi Dettagli →</a>
     </div>
     {% endfor %}
     {% else %}

@@ -1,30 +1,30 @@
 {% extends 'events/base.html' %}
 
-{% block title %}Crea Evento{% endblock %}
+{% block title %}Crea Evento – EventHub{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <h1 class="mb-4">Crea nuovo evento</h1>
-            <p class="text-muted mb-5">Scegli il tipo di evento da creare.</p>
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Nuovo Evento</h1>
+                    <p class="page-subtitle">Scegli il tipo di evento da creare.</p>
+                </div>
+            </div>
             <div class="row g-4">
                 <div class="col-sm-6">
-                    <a href="{% url 'crea_evento_pubblico' %}" class="card text-decoration-none h-100 p-4 border">
-                        <div class="card-body text-center">
-                            <div class="fs-1 mb-3">🌐</div>
-                            <h5 class="card-title">Evento Pubblico</h5>
-                            <p class="card-text text-muted small">Visibile a tutti, con gestione biglietti e partecipanti massimi.</p>
-                        </div>
+                    <a href="{% url 'crea_evento_pubblico' %}" class="tipo-evento-card">
+                        <span class="tipo-icon">🌐</span>
+                        <span class="tipo-label">Evento Pubblico</span>
+                        <span class="tipo-desc">Visibile a tutti, con gestione biglietti e partecipanti massimi.</span>
                     </a>
                 </div>
                 <div class="col-sm-6">
-                    <a href="{% url 'crea_evento_privato' %}" class="card text-decoration-none h-100 p-4 border">
-                        <div class="card-body text-center">
-                            <div class="fs-1 mb-3">🔒</div>
-                            <h5 class="card-title">Evento Privato</h5>
-                            <p class="card-text text-muted small">Solo su invito, con codice accesso e deadline iscrizioni.</p>
-                        </div>
+                    <a href="{% url 'crea_evento_privato' %}" class="tipo-evento-card">
+                        <span class="tipo-icon">🔒</span>
+                        <span class="tipo-label">Evento Privato</span>
+                        <span class="tipo-desc">Solo su invito, con codice accesso e deadline iscrizioni.</span>
                     </a>
                 </div>
             </div>

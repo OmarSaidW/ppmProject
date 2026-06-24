@@ -18,7 +18,7 @@
 
             <div class="card">
                 <div class="meta-info">
-                    <p>📆 <strong>Data e Ora:</strong> {{ evento.date|date:"d M Y - H:i" }}</p>
+                    <p>📆 <strong>Data e Ora:</strong> {{ evento.date_time_start|date:"d M Y - H:i" }}</p>
                     <p>📍 <strong>Luogo:</strong> {{ evento.location }}</p>
                     <p>👤 <strong>Supervisor:</strong>
                         {% if evento.supervisor %}{{ evento.supervisor.username }}{% else %}Nessuno{% endif %}
