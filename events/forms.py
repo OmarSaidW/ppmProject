@@ -1,35 +1,44 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from .models import  Event
+from .models import PublicEvent, EventoPrivato
 
 
-#Form inserimento evento
-class EventForm(forms.ModelForm):
-    class Meta: #La classe meta specifica quali campi prendere del model form Event
-        model = Event
-        fields = ['title', 'description', 'date', 'location', 'supervisor', 'organizers']
-        
-        #Personalizzazione grafica dei campi (Widget)
+class PublicEventForm(forms.ModelForm):
+    class Meta:
+        model = PublicEvent
+        fields = [
+            'title', 'description', 'date_time_start', 'date_time_end', 'location',
+            'supervisor', 'organizers',
+            'ticket_price', 'public_visibility', 'registration_required', 'max_participants',
+        ]
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Titolo dell\'evento'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descrizione'}),
-            'date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Titolo dell'evento"}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'date_time_start': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'date_time_end': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Luogo'}),
-            'supervisor': forms.Select(attrs={'class': 'form-control'}), #Visto che è una FK faccio una select in base ai dipendenti registrati
+            'supervisor': forms.Select(attrs={'class': 'form-control'}),
             'organizers': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'ticket_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'max_participants': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
-class EventUpdateForm(EventForm):  #Eredita da EventForm
-    class Meta: #La classe meta specifica quali campi prendere del model form Event
-        model = Event
-        fields = ['title', 'description', 'date', 'location', 'organizers']
 
-        #Personalizzazione grafica dei campi (Widget)
+class EventoPrivatoForm(forms.ModelForm):
+    class Meta:
+        model = EventoPrivato
+        fields = [
+            'title', 'description', 'date_time_start', 'date_time_end', 'location',
+            'supervisor', 'organizers',
+            'invite_code', 'invitation_deadline', 'approval_required', 'secret_location',
+        ]
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Titolo dell\'evento'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descrizione'}),
-            'date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': "Titolo dell'evento"}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'date_time_start': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'date_time_end': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Luogo'}),
+            'supervisor': forms.Select(attrs={'class': 'form-control'}),
             'organizers': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'invite_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Codice invito univoco'}),
+            'invitation_deadline': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
         }
-        

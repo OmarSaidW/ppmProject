@@ -1,4 +1,4 @@
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, TemplateView
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import get_user_model
@@ -7,11 +7,11 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q, Exists, OuterRef
-from .models import Event, Registration, Invitation
-from .forms import EventForm, EventUpdateForm
+from .models import Event, PublicEvent, EventoPrivato, Registration, Invitation
+from .forms import PublicEventForm, EventoPrivatoForm
 
-# Recuperiamo il modello utente personalizzato in modo sicuro per Django
 CustomUser = get_user_model()
+
 
 # --- LISTA EVENTI ---
 class EventListView(LoginRequiredMixin, ListView):
@@ -21,32 +21,21 @@ class EventListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.ruolo == 'ORGANIZER' or user.is_superuser: 
-            #Se è organizzatore o superAdmin deve (per logica ) vedere tutti gli eventi
+        if user.ruolo == 'ORGANIZER' or user.is_superuser:
             qs = Event.objects.all()
         else:
-            qs = Event.objects.filter( 
-                #Altrimenti (Attendee) vede solo gli eventi a cui è iscritto o invitato
+            qs = Event.objects.filter(
                 Q(registration__user=user) | Q(invitations__invitee=user)
             ).distinct()
-        return qs.order_by('-date')[:50]
-        # Serve per limitare il numero di eventi visualizzati per volta
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = EventForm()
-        return context
+        return qs.order_by('-date_time_start')[:50]
 
 
 # --- DETTAGLIO EVENTO ---
-#Forse la classe più completa finora visto che contiene logica di controllo per tutti e tre ruoli
-#Inoltre gestisce molto bene i template, permettendo di mostrare diversi bottoni
-
 class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = Event
     template_name = 'events/dettaglio_evento.html'
     context_object_name = 'evento'
-    #Organizer e super admin possono vedere tutto, attendee solo se invitato
+
     def test_func(self):
         user = self.request.user
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
@@ -56,7 +45,6 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         has_invitation = Invitation.objects.filter(invitee=user, event=event).exists()
         return has_registration or has_invitation
 
-    #Funzioni che viene chiamata prima di renderizzare il template (come in List View)
     def _context_per_organizer(self, event, is_supervisor):
         accepted_reg = Registration.objects.filter(
             user=OuterRef('invitee'), event=OuterRef('event'), stato='ATTIVO'
@@ -77,7 +65,7 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
                 rifiutato=True
             ).select_related('invitee')
         return ctx
- 
+
     def _context_per_attendee(self, event, user):
         try:
             mio_invito = Invitation.objects.get(invitee=user, event=event, rifiutato=False)
@@ -91,22 +79,22 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
             'mio_invito': mio_invito,
             'mia_registrazione': mia_registrazione,
         }
- 
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         event = self.get_object()
         user = self.request.user
- 
+
         is_supervisor = (user == event.supervisor) or user.is_superuser
         context['is_supervisor'] = is_supervisor
- 
+
         context['partecipanti'] = Registration.objects.filter(
             event=event, stato='ATTIVO'
         ).select_related('user')
         context['usciti'] = Registration.objects.filter(
             event=event, stato='USCITO'
         ).select_related('user')
- 
+
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
             context['user_is_joined'] = (
                 user == event.supervisor or event.organizers.filter(id=user.id).exists()
@@ -117,7 +105,7 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
                 user=user, event=event, stato='ATTIVO'
             ).exists()
             context.update(self._context_per_attendee(event, user))
- 
+
         return context
 
 
@@ -250,22 +238,78 @@ class InviteUserView(LoginRequiredMixin, UserPassesTestMixin, View):
         return redirect('dettaglio_evento', pk=pk)
 
 
-# --- CREARE UN EVENTO ---
-class EventCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
-    model = Event
-    form_class = EventForm
+# --- SCELTA TIPO EVENTO ---
+class EventTypeSelectorView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'events/scegli_tipo_evento.html'
+
+    def test_func(self):
+        return self.request.user.ruolo == 'ORGANIZER' or self.request.user.is_superuser
+
+
+# --- CREA EVENTO PUBBLICO ---
+class PublicEventCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = PublicEvent
+    form_class = PublicEventForm
     template_name = 'events/crea_evento.html'
     success_url = reverse_lazy('lista_eventi')
 
     def test_func(self):
         return self.request.user.ruolo == 'ORGANIZER' or self.request.user.is_superuser
 
+    def form_valid(self, form):
+        form.instance.tipo = 'PUBLIC'
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tipo_evento'] = 'Pubblico'
+        return context
+
+
+# --- CREA EVENTO PRIVATO ---
+class PrivateEventCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = EventoPrivato
+    form_class = EventoPrivatoForm
+    template_name = 'events/crea_evento.html'
+    success_url = reverse_lazy('lista_eventi')
+
+    def test_func(self):
+        return self.request.user.ruolo == 'ORGANIZER' or self.request.user.is_superuser
+
+    def form_valid(self, form):
+        form.instance.tipo = 'PRIVATE'
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tipo_evento'] = 'Privato'
+        return context
+
 
 # --- MODIFICARE UN EVENTO ---
 class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Event
-    form_class = EventUpdateForm
     template_name = 'events/modifica_evento.html'
+
+    def get_object(self, queryset=None):
+        if '_event_subclass' not in self.__dict__:
+            obj = super().get_object(queryset)
+            try:
+                self.__dict__['_event_subclass'] = obj.publicevent
+            except PublicEvent.DoesNotExist:
+                try:
+                    self.__dict__['_event_subclass'] = obj.eventoprivato
+                except EventoPrivato.DoesNotExist:
+                    self.__dict__['_event_subclass'] = obj
+        return self.__dict__['_event_subclass']
+
+    def get_form_class(self):
+        obj = self.get_object()
+        if isinstance(obj, PublicEvent):
+            return PublicEventForm
+        if isinstance(obj, EventoPrivato):
+            return EventoPrivatoForm
+        return PublicEventForm
 
     def get_success_url(self):
         messages.success(self.request, "Evento modificato con successo!")
@@ -279,12 +323,8 @@ class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return is_supervisor or is_organizer or user.is_superuser
 
 
-
-
-
 # --- CALENDARIO EVENTI (JSON per FullCalendar) ---
 class EventCalendarJsonView(LoginRequiredMixin, View):
-    #carica 6 mesi passati e 6 mesi futuri
     def get(self, request):
         user = request.user
         from django.utils import timezone
@@ -294,18 +334,18 @@ class EventCalendarJsonView(LoginRequiredMixin, View):
         six_months_later = now + datetime.timedelta(days=180)
 
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
-            eventi = Event.objects.filter(date__range=(six_months_ago, six_months_later))
+            eventi = Event.objects.filter(date_time_start__range=(six_months_ago, six_months_later))
         else:
             eventi = Event.objects.filter(
                 Q(registration__user=user) | Q(invitations__invitee=user)
-            ).filter(date__range=(six_months_ago, six_months_later)).distinct()
+            ).filter(date_time_start__range=(six_months_ago, six_months_later)).distinct()
 
         data = []
         for e in eventi:
             data.append({
                 'id': e.pk,
                 'title': e.title,
-                'start': e.date.isoformat(),
+                'start': e.date_time_start.isoformat(),
                 'url': e.get_absolute_url(),
                 'extendedProps': {'location': e.location},
             })

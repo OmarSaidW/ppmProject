@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.urls import reverse
-
+from datetime import datetime
 """
 Le tabelle relazionali defite sono:
 1. Event.supervisor -> (Uno-a-Molti) verso la tabella User.
@@ -16,9 +16,15 @@ Le tabelle relazionali defite sono:
 
 
 class Event(models.Model):
+    TIPO_CHOICES = [
+        ('PUBLIC', 'Pubblico'),
+        ('PRIVATE', 'Privato'),
+    ]
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='PUBLIC')
     title = models.CharField(max_length=200)
     description = models.TextField()
-    date = models.DateTimeField()
+    date_time_start = models.DateTimeField(default=datetime.now())
+    date_time_end = models.DateTimeField(default= datetime(2026, 6, 30, 23, 47, 15))
     location = models.CharField(max_length=200)
     
     # Colleghiamo l'evento al nostro CustomUser tramite settings
@@ -30,7 +36,7 @@ class Event(models.Model):
     )
     organizers = models.ManyToManyField(
         settings.AUTH_USER_MODEL, 
-        related_name='organized_events'
+        related_name='organized_events' 
     )
     stato = models.IntegerField(default=0)
     #Definita da ai per permettere di ritornare all'url del dettaglio evento
@@ -41,6 +47,44 @@ class Event(models.Model):
     def __str__(self):
         return self.title
 
+
+class PublicEvent(Event):
+    # Django crea automaticamente un OneToOneField event_ptr -> Event (PK condivisa)
+    ticket_price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0
+    )
+    public_visibility = models.BooleanField(
+        default=True
+    )
+    registration_required = models.BooleanField(
+        default=True
+    )
+    max_participants = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Numero massimo di partecipanti (lasciare vuoto per illimitato)"
+    )
+    def __str__(self):
+        return f"[Pubblico] {self.title}"    
+
+class EventoPrivato(Event):
+
+    invite_code = models.CharField(
+        max_length=20,
+        unique=True
+    )
+
+    invitation_deadline = models.DateTimeField()
+
+    approval_required = models.BooleanField(
+        default=False
+    )
+
+    secret_location = models.BooleanField(
+        default=False
+    )
 
 class Registration(models.Model):
     STATO_CHOICES = [
@@ -53,7 +97,16 @@ class Registration(models.Model):
     registration_date = models.DateTimeField(auto_now_add=True)
     # Permette all'attendee di "lasciare" l'evento mantenendo traccia nel DB
     stato = models.CharField(max_length=10, choices=STATO_CHOICES, default='ATTIVO')
-
+    #Per Gestire il pagamento dell'evento pubblico :
+    payment_status = models.CharField(
+    max_length=20,
+    choices=[
+        ('PENDING', 'In attesa'), #Ovviamente non viene poi veramente gestito il pagamento dato 
+        ('PAID', 'Pagato'),
+        ('REFUNDED', 'Rimborsato'),
+    ],
+    default='PENDING'
+)
     def __str__(self):
         return f"{self.user.username} - {self.event.title} [{self.stato}]"
 

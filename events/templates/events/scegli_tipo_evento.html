@@ -1,0 +1,34 @@
+{% extends 'events/base.html' %}
+
+{% block title %}Crea Evento{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <h1 class="mb-4">Crea nuovo evento</h1>
+            <p class="text-muted mb-5">Scegli il tipo di evento da creare.</p>
+            <div class="row g-4">
+                <div class="col-sm-6">
+                    <a href="{% url 'crea_evento_pubblico' %}" class="card text-decoration-none h-100 p-4 border">
+                        <div class="card-body text-center">
+                            <div class="fs-1 mb-3">🌐</div>
+                            <h5 class="card-title">Evento Pubblico</h5>
+                            <p class="card-text text-muted small">Visibile a tutti, con gestione biglietti e partecipanti massimi.</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-sm-6">
+                    <a href="{% url 'crea_evento_privato' %}" class="card text-decoration-none h-100 p-4 border">
+                        <div class="card-body text-center">
+                            <div class="fs-1 mb-3">🔒</div>
+                            <h5 class="card-title">Evento Privato</h5>
+                            <p class="card-text text-muted small">Solo su invito, con codice accesso e deadline iscrizioni.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

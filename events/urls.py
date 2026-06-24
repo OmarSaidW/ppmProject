@@ -1,15 +1,21 @@
 from django.urls import path
 from .views import (
-    EventListView, EventDetailView, EventCreateView, DeleteEventView,
+    EventListView, EventDetailView, DeleteEventView,
     JoinEventView, LeaveEventView, InviteUserView, DeleteInvitationView,
     RifiutaInvitoView, RemoveParticipantView, RemoveOrganizerView,
-    EventCalendarJsonView, EventUpdateView
+    EventCalendarJsonView, EventUpdateView,
+    EventTypeSelectorView, PublicEventCreateView, PrivateEventCreateView,
 )
 
+
 urlpatterns = [
-    # Lista e creazione eventi
-    path('', EventListView.as_view(), name='lista_eventi'), # Ora è la pagina principale!
-    path('crea/', EventCreateView.as_view(), name='crea_evento'),
+    # Lista eventi
+    path('', EventListView.as_view(), name='lista_eventi'),
+
+    # Creazione evento (scegli tipo → crea specifico)
+    path('crea/', EventTypeSelectorView.as_view(), name='crea_evento'),
+    path('crea/pubblico/', PublicEventCreateView.as_view(), name='crea_evento_pubblico'),
+    path('crea/privato/', PrivateEventCreateView.as_view(), name='crea_evento_privato'),
 
     # Dettaglio evento
     path('<int:pk>/', EventDetailView.as_view(), name='dettaglio_evento'),
