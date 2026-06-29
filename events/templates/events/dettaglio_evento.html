@@ -8,44 +8,150 @@
     <div class="row justify-content-center">
         <div class="col-12 col-lg-9 col-xl-8">
 
-            <!-- Testata -->
+            <!-- ══ HEADER ══ -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">
-                        {{ evento.title }}
-                        {% if evento.stato_evento == 'PROGRAMMATO' %}
-                        <span class="badge bg-primary ms-2"
-                            style="font-size:.6em; vertical-align:middle;">Programmato</span>
-                        {% elif evento.stato_evento == 'IN_CORSO' %}
-                        <span class="badge bg-success ms-2" style="font-size:.6em; vertical-align:middle;">In
-                            corso</span>
+                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                        {% if evento.tipo == 'PUBLIC' %}
+                        <span class="badge bg-primary" style="font-size:.78em; padding:5px 10px;">🌐 Pubblico</span>
                         {% else %}
-                        <span class="badge bg-secondary ms-2"
-                            style="font-size:.6em; vertical-align:middle;">Passato</span>
+                        <span class="badge" style="background:var(--color-gold);color:#fff;font-size:.78em;padding:5px 10px;">🔒 Privato</span>
                         {% endif %}
-                    </h1>
+                        {% if evento.stato_evento == 'PROGRAMMATO' %}
+                        <span class="badge" style="background:var(--color-primary-light);color:var(--color-primary);font-size:.78em;padding:5px 10px;">📅 Programmato</span>
+                        {% elif evento.stato_evento == 'IN_CORSO' %}
+                        <span class="badge bg-success" style="font-size:.78em;padding:5px 10px;">🟢 In corso</span>
+                        {% else %}
+                        <span class="badge bg-secondary" style="font-size:.78em;padding:5px 10px;">Passato</span>
+                        {% endif %}
+                    </div>
+                    <h1 class="page-title">{{ evento.title }}</h1>
                     <p class="page-subtitle">{{ evento.description }}</p>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="meta-info">
-                    <p>📆 <strong>Data e Ora:</strong> {{ evento.date_time_start|date:"d M Y - H:i" }}</p>
-                    <p>📍 <strong>Luogo:</strong> {{ evento.location }}</p>
-                    <p>👤 <strong>Supervisor:</strong>
-                        {% if evento.supervisor %}{{ evento.supervisor.username }}{% else %}Nessuno{% endif %}
-                    </p>
-                    <p>🤝 <strong>Team Organizzatori:</strong>
-                        {% for org in evento.organizers.all %}
-                        {{ org.username }}{% if not forloop.last %}, {% endif %}
-                        {% empty %}Nessuno{% endfor %}
-                    </p>
+            <!-- ══ INFO EVENTO ══ -->
+            {% if evento.tipo == 'PUBLIC' %}
+            <div class="card" style="border-left:4px solid var(--color-primary);">
+            {% else %}
+            <div class="card" style="border-left:4px solid var(--color-gold);">
+            {% endif %}
+                <h3 class="section-title mt-0"
+                    style="color:{% if evento.tipo == 'PUBLIC' %}var(--color-primary){% else %}var(--color-gold){% endif %};">
+                    <i class="bi bi-info-circle me-2"></i>Dettagli Evento
+                </h3>
+                <hr style="margin-top:0; margin-bottom:18px;">
+
+                <div class="row g-4">
+                    <div class="col-12 col-sm-6">
+                        <div class="d-flex gap-3 align-items-start">
+                            <span style="font-size:1.4rem;line-height:1;">📅</span>
+                            <div>
+                                <div style="font-size:.74rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Inizio</div>
+                                <div style="font-weight:600;color:var(--text-primary);">{{ evento.date_time_start|date:"d M Y" }}</div>
+                                <div style="font-size:.85rem;color:var(--text-secondary);">{{ evento.date_time_start|date:"H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="d-flex gap-3 align-items-start">
+                            <span style="font-size:1.4rem;line-height:1;">🏁</span>
+                            <div>
+                                <div style="font-size:.74rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Fine</div>
+                                <div style="font-weight:600;color:var(--text-primary);">{{ evento.date_time_end|date:"d M Y" }}</div>
+                                <div style="font-size:.85rem;color:var(--text-secondary);">{{ evento.date_time_end|date:"H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="d-flex gap-3 align-items-start">
+                            <span style="font-size:1.4rem;line-height:1;">📍</span>
+                            <div>
+                                <div style="font-size:.74rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Luogo</div>
+                                {% if private_event and private_event.secret_location and request.user.ruolo == 'ATTENDEE' and not mia_registrazione %}
+                                <div style="color:var(--text-muted);font-style:italic;">🔒 Rivelato dopo l'iscrizione</div>
+                                {% else %}
+                                <div style="font-weight:600;color:var(--text-primary);">{{ evento.location }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div class="d-flex gap-3 align-items-start">
+                            <span style="font-size:1.4rem;line-height:1;">👤</span>
+                            <div>
+                                <div style="font-size:.74rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Supervisor</div>
+                                <div style="font-weight:600;color:var(--text-primary);">
+                                    {% if evento.supervisor %}{{ evento.supervisor.username }}{% else %}Nessuno{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex gap-3 align-items-start">
+                            <span style="font-size:1.4rem;line-height:1;">🤝</span>
+                            <div>
+                                <div style="font-size:.74rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Team Organizzatori</div>
+                                <div style="font-weight:600;color:var(--text-primary);">
+                                    {% for org in evento.organizers.all %}{{ org.username }}{% if not forloop.last %}, {% endif %}{% empty %}<span style="font-style:italic;color:var(--text-muted);">Nessuno</span>{% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ══ AZIONI UTENTE ══ -->
-                <hr>
-                <div class="d-flex flex-column gap-2">
+                <!-- Badge pubblico: prezzo + posti -->
+                {% if public_event %}
+                <hr style="margin:18px 0 14px;">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    {% if public_event.ticket_price > 0 %}
+                    <span style="background:var(--color-gold-light);color:#92400E;font-weight:700;font-size:.88rem;padding:7px 14px;border-radius:999px;border:1px solid var(--color-gold);">
+                        💶 Biglietto €{{ public_event.ticket_price }}
+                    </span>
+                    {% else %}
+                    <span style="background:var(--color-success-light);color:#065F46;font-weight:700;font-size:.88rem;padding:7px 14px;border-radius:999px;border:1px solid var(--color-success);">
+                        ✓ Ingresso Gratuito
+                    </span>
+                    {% endif %}
+                    {% if public_event.max_participants %}
+                    <span style="background:var(--bg-body);color:var(--text-secondary);font-weight:600;font-size:.85rem;padding:7px 14px;border-radius:999px;border:1px solid var(--border-color);">
+                        👥 {{ partecipanti|length }} / {{ public_event.max_participants }} partecipanti
+                    </span>
+                    {% endif %}
+                    {% if not public_event.public_visibility %}
+                    <span style="background:var(--color-danger-light);color:#991B1B;font-weight:600;font-size:.85rem;padding:7px 14px;border-radius:999px;border:1px solid var(--color-danger);">
+                        ⛔ Non visibile pubblicamente
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
 
+                <!-- Info privato: codice invito e deadline (solo organizer) -->
+                {% if private_event %}
+                {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
+                <hr style="margin:18px 0 14px;">
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6">
+                        <div style="font-size:.74rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">🔑 Codice Invito</div>
+                        <code style="background:var(--color-primary-light);color:var(--color-primary);padding:6px 12px;border-radius:8px;font-size:.95rem;font-weight:700;display:inline-block;">{{ private_event.invite_code }}</code>
+                    </div>
+                    <div class="col-12 col-sm-6">
+                        <div style="font-size:.74rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">⏰ Scadenza Inviti</div>
+                        <div style="font-weight:600;color:var(--text-primary);">{{ private_event.invitation_deadline|date:"d M Y – H:i" }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- ══ AZIONI UTENTE ══ -->
+            <div class="card">
+                <h3 class="section-title mt-0" style="color:var(--color-primary);">
+                    <i class="bi bi-person-check me-2"></i>La Tua Partecipazione
+                </h3>
+                <hr style="margin-top:0; margin-bottom:16px;">
+
+                <div class="d-flex flex-column gap-2">
                     {% if request.user.ruolo == 'ATTENDEE' %}
                     {% if mia_registrazione %}
                     <div class="info-box info-box-success">
@@ -58,11 +164,11 @@
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger">↩ Lascia l'Evento</button>
                     </form>
+
                     {% elif mio_invito %}
                     <div class="info-box info-box-info">📨 Sei stato invitato a questo evento!</div>
                     {% if public_event and public_event.ticket_price > 0 %}
-                    <div class="info-box info-box-warning">🎟 Biglietto richiesto: €{{ public_event.ticket_price }}
-                    </div>
+                    <div class="info-box info-box-warning">🎟 Biglietto richiesto: €{{ public_event.ticket_price }}</div>
                     {% endif %}
                     <div class="d-flex gap-2 flex-wrap">
                         <form action="{% url 'unisciti_evento' evento.pk %}" method="post">
@@ -78,15 +184,11 @@
                             <button type="submit" class="btn btn-danger">✗ Rifiuta Invito</button>
                         </form>
                     </div>
+
                     {% elif public_event and public_event.public_visibility %}
-                    <div class="info-box info-box-info">🌐 Evento pubblico aperto a tutti!</div>
+                    <div class="info-box info-box-info">🌐 Evento pubblico — aperto a tutti!</div>
                     {% if public_event.ticket_price > 0 %}
                     <div class="info-box info-box-warning">🎟 Biglietto: €{{ public_event.ticket_price }}</div>
-                    {% endif %}
-                    {% if public_event.max_participants %}
-                    <p style="font-size:.88rem; color:var(--text-secondary);">
-                        Posti disponibili: {{ partecipanti|length }} / {{ public_event.max_participants }}
-                    </p>
                     {% endif %}
                     <form action="{% url 'unisciti_evento' evento.pk %}" method="post">
                         {% csrf_token %}
@@ -96,6 +198,7 @@
                         <button type="submit" class="btn btn-success">✓ Iscriviti Gratuitamente</button>
                         {% endif %}
                     </form>
+
                     {% else %}
                     <div class="info-box info-box-warning">⚠ Non hai un invito attivo per questo evento.</div>
                     {% endif %}
@@ -111,15 +214,16 @@
                     {% endif %}
                     {% if is_supervisor or request.user.is_superuser or user_is_joined %}
                     {% if modifica_url %}
-                    <a href="{{ modifica_url }}"
-                        class="btn btn-secondary d-block text-center text-decoration-none mb-2">Modifica Evento</a>
+                    <a href="{{ modifica_url }}" class="btn btn-secondary d-block text-center text-decoration-none">
+                        ✏ Modifica Evento
+                    </a>
                     {% endif %}
                     {% endif %}
                     {% if is_supervisor %}
                     <form action="{% url 'elimina_evento' evento.pk %}" method="post"
                         onsubmit="return confirm('Eliminare questo evento? Azione irreversibile.')" class="m-0">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger w-100">🗑 Elimina Evento</button>
+                        <button type="submit" class="btn btn-danger w-100 justify-content-center">🗑 Elimina Evento</button>
                     </form>
                     {% endif %}
                     {% endif %}
@@ -128,13 +232,25 @@
 
             <!-- ══ PARTECIPANTI ══ -->
             <div class="card">
-                <h3 class="section-title mt-0">👥 Ospiti Iscritti</h3>
+                <h3 class="section-title mt-0" style="color:var(--color-primary);">
+                    <i class="bi bi-people me-2"></i>Ospiti Iscritti
+                    <span class="badge bg-primary ms-2" style="font-size:.7em;vertical-align:middle;">{{ partecipanti|length }}</span>
+                </h3>
+                <hr style="margin-top:0; margin-bottom:12px;">
+
                 <ul class="list-unstyled m-0">
                     {% for reg in partecipanti %}
                     <li class="list-item">
                         <span>
                             <strong>{{ reg.user.username }}</strong>
                             <span class="badge badge-attivo ms-2">Attivo</span>
+                            {% if public_event and public_event.ticket_price > 0 and request.user.ruolo == 'ORGANIZER' or public_event and public_event.ticket_price > 0 and request.user.is_superuser %}
+                            {% if reg.payment_status == 'PAID' %}
+                            <span class="badge bg-success ms-1" style="font-size:.7em;">💳 Pagato</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark ms-1" style="font-size:.7em;">⏳ In attesa</span>
+                            {% endif %}
+                            {% endif %}
                             <span class="ms-2" style="font-size:.82em; color:var(--text-muted);">
                                 dal {{ reg.registration_date|date:"d M Y" }}
                             </span>
@@ -150,7 +266,7 @@
                         {% endif %}
                     </li>
                     {% empty %}
-                    <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">
+                    <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem; padding:8px 0;">
                         Nessun partecipante iscritto.
                     </li>
                     {% endfor %}
@@ -158,11 +274,10 @@
 
                 {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
                 {% if usciti %}
-                <h4 class="section-title" style="font-size:.9rem; color:var(--text-secondary);">Ha lasciato l'evento:
-                </h4>
+                <h4 class="section-title" style="font-size:.88rem; color:var(--text-secondary); margin-top:20px;">Ha lasciato l'evento:</h4>
                 <ul class="list-unstyled m-0">
                     {% for reg in usciti %}
-                    <li class="list-item" style="opacity:.65;">
+                    <li class="list-item" style="opacity:.6;">
                         <span>
                             <strong>{{ reg.user.username }}</strong>
                             <span class="badge badge-uscito ms-2">Uscito</span>
@@ -174,16 +289,20 @@
                 {% endif %}
             </div>
 
-            <!-- ══ GESTIONE INVITI (Organizer + Supervisor) ══ -->
+            <!-- ══ GESTIONE INVITI (Organizer) ══ -->
             {% if request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
             <div class="card">
-                <h3 class="section-title mt-0">📨 Gestione Inviti</h3>
+                <h3 class="section-title mt-0" style="color:var(--color-primary);">
+                    <i class="bi bi-envelope me-2"></i>Gestione Inviti
+                </h3>
+                <hr style="margin-top:0; margin-bottom:12px;">
+
                 <ul class="list-unstyled mb-4 mt-0">
                     {% for invito in inviti %}
                     <li class="list-item">
                         <span>
                             <strong>{{ invito.invitee.username }}</strong>
-                            — invitato da {{ invito.inviter.username }}
+                            <span style="color:var(--text-secondary); font-size:.88rem;"> — {{ invito.inviter.username }}</span>
                             {% if invito.accettato %}
                             <span class="badge badge-attivo ms-2">Accettato</span>
                             {% else %}
@@ -191,8 +310,7 @@
                             {% endif %}
                         </span>
                         <div class="actions">
-                            <span style="font-size:.82em; color:var(--text-muted);">{{ invito.invited_at|date:"d M Y"
-                                }}</span>
+                            <span style="font-size:.8em; color:var(--text-muted);">{{ invito.invited_at|date:"d M Y" }}</span>
                             <form action="{% url 'elimina_invito' evento.pk invito.pk %}" method="post"
                                 onsubmit="return confirm('Confermi la cancellazione dell invito per {{ invito.invitee.username }}?')">
                                 {% csrf_token %}
@@ -201,16 +319,15 @@
                         </div>
                     </li>
                     {% empty %}
-                    <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">Nessun invito attivo.
-                    </li>
+                    <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem; padding:8px 0;">Nessun invito attivo.</li>
                     {% endfor %}
                 </ul>
 
                 {% if is_supervisor and inviti_rifiutati %}
-                <h4 class="section-title" style="font-size:.9rem; color:var(--text-secondary);">Inviti rifiutati:</h4>
+                <h4 class="section-title" style="font-size:.88rem; color:var(--text-secondary);">Inviti rifiutati:</h4>
                 <ul class="list-unstyled mb-4 mt-0">
                     {% for invito in inviti_rifiutati %}
-                    <li class="list-item" style="opacity:.65;">
+                    <li class="list-item" style="opacity:.6;">
                         <strong>{{ invito.invitee.username }}</strong>
                         <span class="badge badge-rifiutato ms-2">Rifiutato</span>
                     </li>
@@ -219,22 +336,23 @@
                 {% endif %}
 
                 {% if invitabili %}
-                <form action="{% url 'invita_utente' evento.pk %}" method="post" class="mt-2 p-3 rounded"
-                    style="background:#f8fafc; border:1px solid var(--border-color);">
-                    {% csrf_token %}
+                <div class="p-3 rounded" style="background:var(--bg-body); border:1px solid var(--border-color);">
                     <label for="invitee_select" class="form-label fw-semibold d-block mb-2" style="font-size:.9rem;">
-                        Seleziona Attendee da Invitare:
+                        📨 Seleziona Attendee da Invitare:
                     </label>
-                    <div class="d-flex gap-2">
-                        <select name="invitee_id" id="invitee_select" class="form-control" required>
-                            <option value="">-- Seleziona utente --</option>
-                            {% for utente in invitabili %}
-                            <option value="{{ utente.id }}">{{ utente.username }} ({{ utente.email }})</option>
-                            {% endfor %}
-                        </select>
-                        <button type="submit" class="btn btn-success text-nowrap">📨 Invita</button>
-                    </div>
-                </form>
+                    <form action="{% url 'invita_utente' evento.pk %}" method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <select name="invitee_id" id="invitee_select" class="form-control" required>
+                                <option value="">-- Seleziona utente --</option>
+                                {% for utente in invitabili %}
+                                <option value="{{ utente.id }}">{{ utente.username }} ({{ utente.email }})</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-success text-nowrap">📨 Invita</button>
+                        </div>
+                    </form>
+                </div>
                 {% else %}
                 <p style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">
                     Tutti gli Attendee sono già stati invitati o iscritti.
@@ -242,14 +360,23 @@
                 {% endif %}
             </div>
 
-            <!-- ══ TEAM ORGANIZZATORI (solo Supervisor) ══ -->
+            <!-- ══ TEAM ORGANIZZATORI (Supervisor) ══ -->
             {% if is_supervisor %}
             <div class="card">
-                <h3 class="section-title mt-0">🤝 Team Organizzatori</h3>
+                <h3 class="section-title mt-0" style="color:var(--color-primary);">
+                    <i class="bi bi-people-fill me-2"></i>Team Organizzatori
+                </h3>
+                <hr style="margin-top:0; margin-bottom:12px;">
+
                 <ul class="list-unstyled m-0">
                     {% for org in organizzatori %}
                     <li class="list-item">
-                        <span><strong>{{ org.username }}</strong></span>
+                        <span>
+                            <strong>{{ org.username }}</strong>
+                            {% if org == evento.supervisor %}
+                            <span class="badge badge-organizer ms-2">Supervisor</span>
+                            {% endif %}
+                        </span>
                         <div class="actions">
                             {% if org != evento.supervisor %}
                             <form action="{% url 'rimuovi_organizzatore' evento.pk org.pk %}" method="post"
@@ -257,14 +384,11 @@
                                 {% csrf_token %}
                                 <button type="submit" class="btn-xs btn-xs-danger">Rimuovi</button>
                             </form>
-                            {% else %}
-                            <span class="badge badge-organizer">Supervisor</span>
                             {% endif %}
                         </div>
                     </li>
                     {% empty %}
-                    <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem;">Nessun organizzatore.
-                    </li>
+                    <li style="color:var(--text-secondary); font-style:italic; font-size:.92rem; padding:8px 0;">Nessun organizzatore.</li>
                     {% endfor %}
                 </ul>
             </div>

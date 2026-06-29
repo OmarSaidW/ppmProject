@@ -25,7 +25,20 @@
                 <h2>Accedi al tuo account</h2>
                 <form method="post">
                     {% csrf_token %}
-                    {{ form.as_p }}
+                    {% if form.non_field_errors %}
+                    <div class="info-box info-box-error mb-3">
+                        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                    {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                        <span style="color:var(--color-danger);font-size:.85rem;display:block;margin-top:4px;">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
                     <button type="submit" class="btn">Entra</button>
                 </form>
                 <div class="auth-links">

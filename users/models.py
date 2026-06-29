@@ -11,6 +11,7 @@ class CustomUser(AbstractUser):
     #Nota: Non possiamo definire la relazione con il gruppo qui, perché il gruppo non esiste ancora al momento della creazione dell'utente
     ruolo = models.CharField(max_length=20, choices=RUOLO_CHOICES, default='ATTENDEE')
     telefono = models.CharField(max_length=15, blank=True, null=True)
+    organizer_attivo = models.BooleanField(default=True)
     #TODO: inserire una foto profilo
     #foto_profilo = models.ImageField(upload_to='foto_profilo/', blank=True, null=True) 
 

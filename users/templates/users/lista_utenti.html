@@ -5,11 +5,26 @@
 {% block nav_active_utenti %}active{% endblock %}
 
 {% block content %}
-<div class="page-header">
+<div class="page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
     <div>
         <h1 class="page-title">👥 Utenti del Sistema</h1>
         <p class="page-subtitle">Gestione degli account registrati</p>
     </div>
+
+    <!-- Filtro ruolo: solo per organizer e superuser -->
+    {% if user.ruolo == 'ORGANIZER' or user.is_superuser %}
+    <div class="view-toggle btn-group" role="group">
+        <a href="?" class="view-toggle-btn btn {% if not ruolo_filter %}active{% endif %}">
+            Tutti
+        </a>
+        <a href="?ruolo=ORGANIZER" class="view-toggle-btn btn {% if ruolo_filter == 'ORGANIZER' %}active{% endif %}">
+            Organizer
+        </a>
+        <a href="?ruolo=ATTENDEE" class="view-toggle-btn btn {% if ruolo_filter == 'ATTENDEE' %}active{% endif %}">
+            Attendee
+        </a>
+    </div>
+    {% endif %}
 </div>
 
 <div class="table-wrapper">
@@ -19,6 +34,9 @@
                 <th>Username</th>
                 <th>Email</th>
                 <th>Ruolo</th>
+                {% if user.ruolo == 'ORGANIZER' or user.is_superuser %}
+                <th>Stato</th>
+                {% endif %}
                 <th>Azioni</th>
             </tr>
         </thead>
@@ -27,59 +45,103 @@
             <tr>
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px; height:32px; border-radius:50%; background:var(--color-primary-light);
-                                    color:var(--color-primary); font-weight:700; display:flex; align-items:center;
+                        <div style="width:32px; height:32px; border-radius:50%;
+                                    background:{% if utente.ruolo == 'ORGANIZER' %}var(--color-primary-light){% else %}var(--color-success-light){% endif %};
+                                    color:{% if utente.ruolo == 'ORGANIZER' %}var(--color-primary){% else %}var(--color-success){% endif %};
+                                    font-weight:700; display:flex; align-items:center;
                                     justify-content:center; font-size:.85rem; flex-shrink:0;">
                             {{ utente.username|slice:":1"|upper }}
                         </div>
                         <strong>{{ utente.username }}</strong>
+                        {% if utente.is_superuser %}
+                        <span class="badge" style="background:#1E1A45;color:#A5B4FC;font-size:.68em;">Admin</span>
+                        {% endif %}
                     </div>
                 </td>
                 <td style="color:var(--text-secondary);">{{ utente.email|default:"—" }}</td>
                 <td>
                     {% if utente.ruolo == 'ORGANIZER' %}
-                        <span class="badge badge-organizer">Organizer</span>
+                    <span class="badge badge-organizer">Organizer</span>
                     {% else %}
-                        <span class="badge badge-attendee">Attendee</span>
+                    <span class="badge badge-attendee">Attendee</span>
                     {% endif %}
                 </td>
+
+                {% if user.ruolo == 'ORGANIZER' or user.is_superuser %}
+                <td>
+                    {% if utente.ruolo == 'ORGANIZER' and not utente.is_superuser %}
+                        {% if utente.organizer_attivo %}
+                        <span style="display:inline-flex;align-items:center;gap:5px;
+                                     background:var(--color-success-light);color:#065F46;
+                                     font-weight:700;font-size:.8rem;padding:4px 10px;
+                                     border-radius:999px;border:1px solid var(--color-success);">
+                            <span style="width:7px;height:7px;border-radius:50%;background:var(--color-success);display:inline-block;"></span>
+                            Attivo
+                        </span>
+                        {% else %}
+                        <span style="display:inline-flex;align-items:center;gap:5px;
+                                     background:var(--color-danger-light);color:#991B1B;
+                                     font-weight:700;font-size:.8rem;padding:4px 10px;
+                                     border-radius:999px;border:1px solid var(--color-danger);">
+                            <span style="width:7px;height:7px;border-radius:50%;background:var(--color-danger);display:inline-block;"></span>
+                            Disattivo
+                        </span>
+                        {% endif %}
+                    {% else %}
+                    <span style="color:var(--text-muted);font-size:.85rem;">—</span>
+                    {% endif %}
+                </td>
+                {% endif %}
+
                 <td>
                     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+
                         <a href="{% url 'dettaglio_profilo' utente.pk %}" class="btn btn-sm btn-outline">
                             👤 Profilo
                         </a>
+
                         {% if user.ruolo == 'ORGANIZER' or user.is_superuser %}
+
                         <a href="{% url 'organizer_modifica_utente' utente.pk %}" class="btn btn-sm"
-                           style="background:var(--color-warning); color:white;">
+                           style="background:var(--color-warning);color:white;">
                             ✏ Cambia Ruolo
                         </a>
-                        {% endif %}
-                        <!-- Elimina utente: organizer elimina solo ATTENDEE; superuser elimina ORGANIZER -->
-                        {% if user.ruolo == 'ORGANIZER' and utente.ruolo == 'ATTENDEE' and user != utente %}
-                        <form action="{% url 'admin_elimina_utente' utente.pk %}" method="post" style="margin:0;"
-                              onsubmit="return confirm('Confermi la cancellazione di: {{ utente.username }}? L azione e irreversibile.')">
+
+                        <!-- Toggle stato: solo superuser, solo organizer non-admin -->
+                        {% if user.is_superuser and utente.ruolo == 'ORGANIZER' and not utente.is_superuser %}
+                        <form action="{% url 'toggle_organizer_stato' utente.pk %}" method="post" style="margin:0;">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina</button>
-                        </form>
-                        {% elif user.is_superuser and utente.ruolo == 'ORGANIZER' and not utente.is_superuser and user != utente %}
-                        <form action="{% url 'admin_elimina_utente' utente.pk %}" method="post" style="margin:0;"
-                              onsubmit="return confirm('Confermi la cancellazione dell organizer: {{ utente.username }}?')">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina</button>
-                        </form>
-                        {% elif user.is_superuser and utente.ruolo == 'ATTENDEE' and user != utente %}
-                        <form action="{% url 'admin_elimina_utente' utente.pk %}" method="post" style="margin:0;"
-                              onsubmit="return confirm('Confermi la cancellazione di: {{ utente.username }}?')">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina</button>
+                            {% if utente.organizer_attivo %}
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Disattivare {{ utente.username }}? Non potrà più accedere.')">
+                                ⛔ Disattiva
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn btn-sm btn-success"
+                                    onclick="return confirm('Attivare {{ utente.username }}?')">
+                                ✅ Attiva
+                            </button>
+                            {% endif %}
                         </form>
                         {% endif %}
+
+                        <!-- Elimina: solo ATTENDEE -->
+                        {% if utente.ruolo == 'ATTENDEE' and user != utente and not utente.is_superuser %}
+                        <form action="{% url 'admin_elimina_utente' utente.pk %}" method="post" style="margin:0;"
+                              onsubmit="return confirm('Eliminare {{ utente.username }}? Azione irreversibile.')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina</button>
+                        </form>
+                        {% endif %}
+
+                        {% endif %}{# fine blocco organizer/superuser #}
                     </div>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" style="text-align:center; color:var(--text-secondary); padding:32px;">
+                <td colspan="{% if user.ruolo == 'ORGANIZER' or user.is_superuser %}5{% else %}4{% endif %}"
+                    style="text-align:center; color:var(--text-secondary); padding:32px;">
                     Nessun utente trovato.
                 </td>
             </tr>

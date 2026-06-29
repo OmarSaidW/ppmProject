@@ -105,13 +105,15 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
 
         try:
             context['public_event'] = event.publicevent
+            context['private_event'] = None
             context['modifica_url'] = reverse('modifica_evento_pubblico', kwargs={'pk': event.pk})
         except PublicEvent.DoesNotExist:
             context['public_event'] = None
             try:
-                event.eventoprivato
+                context['private_event'] = event.eventoprivato
                 context['modifica_url'] = reverse('modifica_evento_privato', kwargs={'pk': event.pk})
             except EventoPrivato.DoesNotExist:
+                context['private_event'] = None
                 context['modifica_url'] = None
 
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
@@ -133,6 +135,10 @@ class JoinEventView(LoginRequiredMixin, View):
     def post(self, request, pk):
         event = get_object_or_404(Event, pk=pk)
         user = request.user
+
+        if event.stato_evento == 'PASSATO':
+            messages.error(request, "Impossibile iscriversi: l'evento è già concluso.")
+            return redirect('dettaglio_evento', pk=pk)
 
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
             if user != event.supervisor and not event.organizers.filter(id=user.id).exists():
@@ -262,6 +268,9 @@ class InviteUserView(LoginRequiredMixin, UserPassesTestMixin, View):
 
     def post(self, request, pk):
         event = get_object_or_404(Event, pk=pk)
+        if event.stato_evento == 'PASSATO':
+            messages.error(request, "Impossibile invitare utenti: l'evento è già concluso.")
+            return redirect('dettaglio_evento', pk=pk)
         invitee_id = request.POST.get('invitee_id')
         if invitee_id:
             invitee = get_object_or_404(CustomUser, id=invitee_id)
@@ -389,6 +398,9 @@ class PaymentView(LoginRequiredMixin, View):
         if request.user.ruolo != 'ATTENDEE':
             messages.error(request, "Solo gli attendee possono acquistare biglietti.")
             return redirect('dettaglio_evento', pk=pk)
+        if event.stato_evento == 'PASSATO':
+            messages.error(request, "L'evento è già concluso.")
+            return redirect('dettaglio_evento', pk=pk)
         if Registration.objects.filter(user=request.user, event=event, stato='ATTIVO').exists():
             messages.info(request, "Sei già iscritto a questo evento.")
             return redirect('dettaglio_evento', pk=pk)
@@ -399,6 +411,9 @@ class PaymentView(LoginRequiredMixin, View):
         user = request.user
         if user.ruolo != 'ATTENDEE':
             messages.error(request, "Solo gli attendee possono acquistare biglietti.")
+            return redirect('dettaglio_evento', pk=pk)
+        if event.stato_evento == 'PASSATO':
+            messages.error(request, "L'evento è già concluso.")
             return redirect('dettaglio_evento', pk=pk)
 
         with transaction.atomic():

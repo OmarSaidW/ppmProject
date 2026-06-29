@@ -3,10 +3,28 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from .forms import CustomUserCreationForm, UserProfileUpdateForm, OrganizerChangeRoleForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.views import LoginView as DjangoLoginView
+from django.forms.utils import ErrorList
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.views import View
 from django.shortcuts import get_object_or_404, redirect
 from .models import CustomUser
+
+
+class CustomLoginView(DjangoLoginView):
+    template_name = 'registration/login.html'
+
+    def form_invalid(self, form):
+        username = form.data.get('username', '')
+        try:
+            user = CustomUser.objects.get(username=username)
+            if user.ruolo == 'ORGANIZER' and not user.organizer_attivo:
+                form._errors = {'__all__': ErrorList(['Utente Disattivato.'])}
+                return self.render_to_response(self.get_context_data(form=form))
+        except CustomUser.DoesNotExist:
+            pass
+        return super().form_invalid(form)
+
 
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
@@ -63,6 +81,21 @@ class UserListView(LoginRequiredMixin, ListView):
     template_name = 'users/lista_utenti.html'
     context_object_name = 'utenti'
 
+    def get_queryset(self):
+        user = self.request.user
+        qs = CustomUser.objects.all().order_by('username')
+        if user.ruolo == 'ATTENDEE' and not user.is_superuser:
+            return qs.filter(ruolo='ATTENDEE')
+        ruolo_filter = self.request.GET.get('ruolo', '')
+        if ruolo_filter in ('ORGANIZER', 'ATTENDEE'):
+            qs = qs.filter(ruolo=ruolo_filter)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['ruolo_filter'] = self.request.GET.get('ruolo', '')
+        return context
+
 
 # --- UPDATE: Cambia Ruolo (FIX: messages.success in form_valid) ---
 class OrganizerUpdateUserView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -114,33 +147,44 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return super().form_valid(form)
 
 
-# --- DELETE: Admin/Organizer elimina un altro utente ---
+# --- DELETE: Admin/Organizer elimina un altro utente (solo ATTENDEE) ---
 class AdminDeleteUserView(LoginRequiredMixin, View):
     def post(self, request, pk):
         target = get_object_or_404(CustomUser, pk=pk)
 
-        # Non si può eliminare se stessi
         if target == request.user:
             messages.error(request, "Non puoi eliminare te stesso.")
             return redirect('lista_utenti')
 
-        # Non si può eliminare un superuser
         if target.is_superuser:
             messages.error(request, "Non puoi eliminare un amministratore di sistema.")
             return redirect('lista_utenti')
 
-        # Organizer → può eliminare solo ATTENDEE
-        if request.user.ruolo == 'ORGANIZER' and not request.user.is_superuser:
-            if target.ruolo != 'ATTENDEE':
-                messages.error(request, "Come Organizer puoi eliminare solo account Attendee.")
-                return redirect('lista_utenti')
+        if target.ruolo != 'ATTENDEE':
+            messages.error(request, "È possibile eliminare solo account di tipo Attendee.")
+            return redirect('lista_utenti')
 
-        # Superuser → può eliminare ATTENDEE e ORGANIZER (non altri superuser)
-        elif not request.user.is_superuser:
+        if request.user.ruolo != 'ORGANIZER' and not request.user.is_superuser:
             messages.error(request, "Non hai i permessi per eliminare utenti.")
             return redirect('lista_utenti')
 
         username = target.username
         target.delete()
         messages.success(request, f"Account di {username} eliminato con successo.")
+        return redirect('lista_utenti')
+
+
+# --- TOGGLE stato organizer (solo superuser) ---
+class ToggleOrganizerStatusView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        if not request.user.is_superuser:
+            messages.error(request, "Solo l'amministratore può modificare lo stato degli organizzatori.")
+            return redirect('lista_utenti')
+
+        target = get_object_or_404(CustomUser, pk=pk, ruolo='ORGANIZER')
+        target.organizer_attivo = not target.organizer_attivo
+        target.is_active = target.organizer_attivo
+        target.save(update_fields=['organizer_attivo', 'is_active'])
+        stato = "attivato" if target.organizer_attivo else "disattivato"
+        messages.success(request, f"Organizzatore {target.username} {stato}.")
         return redirect('lista_utenti')

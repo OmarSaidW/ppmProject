@@ -125,3 +125,8 @@ AUTH_USER_MODEL = 'users.CustomUser' #GestioneUtenti
 LOGIN_REDIRECT_URL = 'lista_eventi'  # Dopo il login, reindirizza alla homepage
 LOGOUT_REDIRECT_URL = 'login' # Dopo il logout, reindirizza alla homepage
 LOGIN_URL = 'login' #Per i sistemi di autenticazione, se l'utente non è loggato, viene reindirizzato alla pagina di login
+
+# Sessione scade dopo 2 ore (7200 secondi) indipendentemente dall'attività
+SESSION_COOKIE_AGE = 7200
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = False

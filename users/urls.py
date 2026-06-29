@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from .views import (
+    CustomLoginView,
     SignUpView,
     UserListView,
     UserDetailView,
@@ -8,11 +9,12 @@ from .views import (
     OrganizerUpdateUserView,
     UserDeleteView,
     AdminDeleteUserView,
+    ToggleOrganizerStatusView,
 )
 
 urlpatterns = [
     # Autenticazione
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(template_name='registration/logout.html'), name='logout'),
 
     # Registrazione
@@ -25,4 +27,5 @@ urlpatterns = [
     path('<int:pk>/cambia-ruolo/', OrganizerUpdateUserView.as_view(), name='organizer_modifica_utente'),
     path('<int:pk>/elimina/', UserDeleteView.as_view(), name='elimina_profilo'),
     path('<int:pk>/admin-elimina/', AdminDeleteUserView.as_view(), name='admin_elimina_utente'),
+    path('<int:pk>/toggle-stato/', ToggleOrganizerStatusView.as_view(), name='toggle_organizer_stato'),
 ]
