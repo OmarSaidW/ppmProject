@@ -83,7 +83,16 @@
                 <span class="event-month">{{ evento.date_time_start|date:"M" }}</span>
             </div>
             <div class="event-content">
-                <div class="event-title">{{ evento.title }}</div>
+                <div class="event-title">
+                    {{ evento.title }}
+                    {% if evento.stato_evento == 'PROGRAMMATO' %}
+                    <span class="badge bg-primary ms-1" style="font-size:.62em; vertical-align:middle;">Programmato</span>
+                    {% elif evento.stato_evento == 'IN_CORSO' %}
+                    <span class="badge bg-success ms-1" style="font-size:.62em; vertical-align:middle;">In corso</span>
+                    {% else %}
+                    <span class="badge bg-secondary ms-1" style="font-size:.62em; vertical-align:middle;">Passato</span>
+                    {% endif %}
+                </div>
                 {% if evento.description %}
                 <div class="event-description">{{ evento.description }}</div>
                 {% endif %}

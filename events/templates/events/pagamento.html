@@ -1,0 +1,72 @@
+{% extends 'events/base.html' %}
+{% load static %}
+
+{% block title %}Pagamento Biglietto – {{ evento.title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-6 col-lg-5">
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🎟 Acquisto Biglietto</h1>
+                    <p class="page-subtitle">{{ evento.title }}</p>
+                </div>
+            </div>
+
+            <div class="card p-4">
+                <div class="info-box info-box-warning mb-4">
+                    <strong>Importo da pagare: €{{ evento.ticket_price }}</strong><br>
+                    <small style="color:var(--text-secondary);">
+                        Pagamento simulato — nessun addebito reale verrà effettuato.
+                    </small>
+                </div>
+
+                <form method="post" action="{% url 'pagamento_evento' evento.pk %}">
+                    {% csrf_token %}
+
+                    <div class="form-group mb-3">
+                        <label class="form-label fw-semibold">Numero Carta</label>
+                        <input type="text" class="form-control" name="card_number"
+                               placeholder="1234 5678 9012 3456" maxlength="19"
+                               pattern="\d{4}[\s]?\d{4}[\s]?\d{4}[\s]?\d{4}" required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Scadenza</label>
+                            <input type="text" class="form-control" name="expiry"
+                                   placeholder="MM/AA" maxlength="5"
+                                   pattern="\d{2}/\d{2}" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">CVV</label>
+                            <input type="text" class="form-control" name="cvv"
+                                   placeholder="123" maxlength="3"
+                                   pattern="\d{3}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label fw-semibold">Intestatario Carta</label>
+                        <input type="text" class="form-control" name="card_holder"
+                               placeholder="Nome Cognome" required>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success flex-fill">
+                            💳 Paga €{{ evento.ticket_price }} e Iscriviti
+                        </button>
+                        <a href="{% url 'dettaglio_evento' evento.pk %}" class="btn btn-secondary">
+                            Annulla
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <a href="{% url 'dettaglio_evento' evento.pk %}" class="back-link">← Torna all'evento</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

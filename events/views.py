@@ -2,10 +2,11 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, T
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth import get_user_model
-from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse, reverse_lazy
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db import transaction
 from django.db.models import Q, Exists, OuterRef
 from .models import Event, PublicEvent, EventoPrivato, Registration, Invitation
 from .forms import PublicEventForm, EventoPrivatoForm
@@ -25,7 +26,9 @@ class EventListView(LoginRequiredMixin, ListView):
             qs = Event.objects.all()
         else:
             qs = Event.objects.filter(
-                Q(registration__user=user) | Q(invitations__invitee=user)
+                Q(registration__user=user) |
+                Q(invitations__invitee=user) |
+                Q(publicevent__public_visibility=True)
             ).distinct()
         return qs.order_by('-date_time_start')[:50]
 
@@ -41,6 +44,11 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
             return True
         event = self.get_object()
+        try:
+            if event.publicevent.public_visibility:
+                return True
+        except PublicEvent.DoesNotExist:
+            pass
         has_registration = Registration.objects.filter(user=user, event=event).exists()
         has_invitation = Invitation.objects.filter(invitee=user, event=event).exists()
         return has_registration or has_invitation
@@ -95,6 +103,17 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
             event=event, stato='USCITO'
         ).select_related('user')
 
+        try:
+            context['public_event'] = event.publicevent
+            context['modifica_url'] = reverse('modifica_evento_pubblico', kwargs={'pk': event.pk})
+        except PublicEvent.DoesNotExist:
+            context['public_event'] = None
+            try:
+                event.eventoprivato
+                context['modifica_url'] = reverse('modifica_evento_privato', kwargs={'pk': event.pk})
+            except EventoPrivato.DoesNotExist:
+                context['modifica_url'] = None
+
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
             context['user_is_joined'] = (
                 user == event.supervisor or event.organizers.filter(id=user.id).exists()
@@ -122,19 +141,39 @@ class JoinEventView(LoginRequiredMixin, View):
             else:
                 messages.info(request, "Fai già parte del team degli organizzatori di questo evento.")
         elif user.ruolo == 'ATTENDEE':
+            try:
+                public_event = event.publicevent
+            except PublicEvent.DoesNotExist:
+                public_event = None
+
             has_invitation = Invitation.objects.filter(invitee=user, event=event, rifiutato=False).exists()
-            if has_invitation:
-                reg, created = Registration.objects.get_or_create(user=user, event=event, defaults={'stato': 'ATTIVO'})
-                if not created and reg.stato == 'USCITO':
-                    reg.stato = 'ATTIVO'
-                    reg.save()
-                    messages.success(request, "Ti sei re-iscritto a questo evento!")
-                elif created:
-                    messages.success(request, "Ti sei iscritto con successo a questo evento!")
-                else:
-                    messages.info(request, "Sei già iscritto a questo evento.")
-            else:
+            is_public_open = public_event is not None and public_event.public_visibility
+
+            if not has_invitation and not is_public_open:
                 messages.error(request, "Non hai un invito attivo per questo evento.")
+                return redirect('dettaglio_evento', pk=pk)
+
+            if public_event and public_event.max_participants:
+                current_count = Registration.objects.filter(event=event, stato='ATTIVO').count()
+                if current_count >= public_event.max_participants:
+                    messages.error(request, "L'evento ha raggiunto il numero massimo di partecipanti.")
+                    return redirect('dettaglio_evento', pk=pk)
+
+            if public_event and public_event.ticket_price > 0:
+                return redirect('pagamento_evento', pk=pk)
+
+            reg, created = Registration.objects.get_or_create(
+                user=user, event=event,
+                defaults={'stato': 'ATTIVO', 'payment_status': 'PAID'}
+            )
+            if not created and reg.stato == 'USCITO':
+                reg.stato = 'ATTIVO'
+                reg.save()
+                messages.success(request, "Ti sei re-iscritto a questo evento!")
+            elif created:
+                messages.success(request, "Ti sei iscritto con successo a questo evento!")
+            else:
+                messages.info(request, "Sei già iscritto a questo evento.")
 
         return redirect('dettaglio_evento', pk=pk)
 
@@ -287,40 +326,107 @@ class PrivateEventCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView
 
 
 # --- MODIFICARE UN EVENTO ---
-class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    model = Event
-    template_name = 'events/modifica_evento.html'
-
-    def get_object(self, queryset=None):
-        if '_event_subclass' not in self.__dict__:
-            obj = super().get_object(queryset)
-            try:
-                self.__dict__['_event_subclass'] = obj.publicevent
-            except PublicEvent.DoesNotExist:
-                try:
-                    self.__dict__['_event_subclass'] = obj.eventoprivato
-                except EventoPrivato.DoesNotExist:
-                    self.__dict__['_event_subclass'] = obj
-        return self.__dict__['_event_subclass']
-
-    def get_form_class(self):
-        obj = self.get_object()
-        if isinstance(obj, PublicEvent):
-            return PublicEventForm
-        if isinstance(obj, EventoPrivato):
-            return EventoPrivatoForm
-        return PublicEventForm
-
-    def get_success_url(self):
-        messages.success(self.request, "Evento modificato con successo!")
-        return reverse_lazy('dettaglio_evento', kwargs={'pk': self.object.pk})
+class PrivateEventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = EventoPrivato
+    form_class = EventoPrivatoForm
+    template_name = 'events/modifica_evento_privato.html'
+    success_url = reverse_lazy('lista_eventi')
 
     def test_func(self):
-        event = self.get_object()
-        user = self.request.user
-        is_organizer = event.organizers.filter(id=user.id).exists()
-        is_supervisor = event.supervisor == user
-        return is_supervisor or is_organizer or user.is_superuser
+        return self.request.user.ruolo == 'ORGANIZER' or self.request.user.is_superuser
+
+    def get_object(self, queryset=None):
+        event = get_object_or_404(Event, pk=self.kwargs['pk'])
+        try:
+            return event.eventoprivato
+        except EventoPrivato.DoesNotExist:
+            from django.http import Http404
+            raise Http404("Evento privato non trovato.")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tipo_evento'] = 'Privato'
+        return context
+
+
+class PublicEventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = PublicEvent
+    form_class = PublicEventForm
+    template_name = 'events/modifica_evento_pubblico.html'
+    success_url = reverse_lazy('lista_eventi')
+
+    def test_func(self):
+        return self.request.user.ruolo == 'ORGANIZER' or self.request.user.is_superuser
+
+    def get_object(self, queryset=None):
+        event = get_object_or_404(Event, pk=self.kwargs['pk'])
+        try:
+            return event.publicevent
+        except PublicEvent.DoesNotExist:
+            # Event created before MTI refactor: auto-create missing child row
+            pub = PublicEvent(
+                event_ptr_id=event.pk,
+                ticket_price=0,
+                public_visibility=True,
+                registration_required=True,
+                max_participants=None,
+            )
+            pub.save_base(raw=True)
+            event.tipo = 'PUBLIC'
+            event.save(update_fields=['tipo'])
+            return PublicEvent.objects.get(pk=event.pk)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tipo_evento'] = 'Pubblico'
+        return context
+
+
+# --- PAGAMENTO BIGLIETTO ---
+class PaymentView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        event = get_object_or_404(PublicEvent, pk=pk)
+        if request.user.ruolo != 'ATTENDEE':
+            messages.error(request, "Solo gli attendee possono acquistare biglietti.")
+            return redirect('dettaglio_evento', pk=pk)
+        if Registration.objects.filter(user=request.user, event=event, stato='ATTIVO').exists():
+            messages.info(request, "Sei già iscritto a questo evento.")
+            return redirect('dettaglio_evento', pk=pk)
+        return render(request, 'events/pagamento.html', {'evento': event})
+
+    def post(self, request, pk):
+        event = get_object_or_404(PublicEvent, pk=pk)
+        user = request.user
+        if user.ruolo != 'ATTENDEE':
+            messages.error(request, "Solo gli attendee possono acquistare biglietti.")
+            return redirect('dettaglio_evento', pk=pk)
+
+        with transaction.atomic():
+            if event.max_participants:
+                current_count = Registration.objects.select_for_update().filter(
+                    event=event, stato='ATTIVO'
+                ).count()
+                if current_count >= event.max_participants:
+                    messages.error(request, "L'evento ha raggiunto il numero massimo di partecipanti.")
+                    return redirect('dettaglio_evento', pk=pk)
+
+            reg, created = Registration.objects.get_or_create(
+                user=user,
+                event=event,
+                defaults={'stato': 'ATTIVO', 'payment_status': 'PAID'}
+            )
+            if not created:
+                if reg.stato == 'USCITO':
+                    reg.stato = 'ATTIVO'
+                    reg.payment_status = 'PAID'
+                    reg.save()
+                    messages.success(request, f"Pagamento di €{event.ticket_price:.2f} completato! Ti sei re-iscritto all'evento.")
+                else:
+                    messages.info(request, "Sei già iscritto a questo evento.")
+            else:
+                messages.success(request, f"Pagamento di €{event.ticket_price:.2f} completato! Sei iscritto all'evento.")
+
+        return redirect('dettaglio_evento', pk=pk)
 
 
 # --- CALENDARIO EVENTI (JSON per FullCalendar) ---
@@ -337,7 +443,9 @@ class EventCalendarJsonView(LoginRequiredMixin, View):
             eventi = Event.objects.filter(date_time_start__range=(six_months_ago, six_months_later))
         else:
             eventi = Event.objects.filter(
-                Q(registration__user=user) | Q(invitations__invitee=user)
+                Q(registration__user=user) |
+                Q(invitations__invitee=user) |
+                Q(publicevent__public_visibility=True)
             ).filter(date_time_start__range=(six_months_ago, six_months_later)).distinct()
 
         data = []

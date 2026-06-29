@@ -11,7 +11,19 @@
             <!-- Testata -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">{{ evento.title }}</h1>
+                    <h1 class="page-title">
+                        {{ evento.title }}
+                        {% if evento.stato_evento == 'PROGRAMMATO' %}
+                        <span class="badge bg-primary ms-2"
+                            style="font-size:.6em; vertical-align:middle;">Programmato</span>
+                        {% elif evento.stato_evento == 'IN_CORSO' %}
+                        <span class="badge bg-success ms-2" style="font-size:.6em; vertical-align:middle;">In
+                            corso</span>
+                        {% else %}
+                        <span class="badge bg-secondary ms-2"
+                            style="font-size:.6em; vertical-align:middle;">Passato</span>
+                        {% endif %}
+                    </h1>
                     <p class="page-subtitle">{{ evento.description }}</p>
                 </div>
             </div>
@@ -36,23 +48,54 @@
 
                     {% if request.user.ruolo == 'ATTENDEE' %}
                     {% if mia_registrazione %}
-                    <div class="info-box info-box-success">✓ Sei iscritto a questo evento.</div>
+                    <div class="info-box info-box-success">
+                        ✓ Sei iscritto a questo evento.
+                        {% if mia_registrazione.payment_status == 'PAID' and public_event and public_event.ticket_price > 0 %}
+                        <span class="badge bg-success ms-2">💳 Biglietto pagato</span>
+                        {% endif %}
+                    </div>
                     <form action="{% url 'lascia_evento' evento.pk %}" method="post">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger">↩ Lascia l'Evento</button>
                     </form>
                     {% elif mio_invito %}
                     <div class="info-box info-box-info">📨 Sei stato invitato a questo evento!</div>
+                    {% if public_event and public_event.ticket_price > 0 %}
+                    <div class="info-box info-box-warning">🎟 Biglietto richiesto: €{{ public_event.ticket_price }}
+                    </div>
+                    {% endif %}
                     <div class="d-flex gap-2 flex-wrap">
                         <form action="{% url 'unisciti_evento' evento.pk %}" method="post">
                             {% csrf_token %}
+                            {% if public_event and public_event.ticket_price > 0 %}
+                            <button type="submit" class="btn btn-success">💳 Acquista biglietto e Unisciti</button>
+                            {% else %}
                             <button type="submit" class="btn btn-success">✓ Accetta e Unisciti</button>
+                            {% endif %}
                         </form>
                         <form action="{% url 'rifiuta_invito' evento.pk %}" method="post">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-danger">✗ Rifiuta Invito</button>
                         </form>
                     </div>
+                    {% elif public_event and public_event.public_visibility %}
+                    <div class="info-box info-box-info">🌐 Evento pubblico aperto a tutti!</div>
+                    {% if public_event.ticket_price > 0 %}
+                    <div class="info-box info-box-warning">🎟 Biglietto: €{{ public_event.ticket_price }}</div>
+                    {% endif %}
+                    {% if public_event.max_participants %}
+                    <p style="font-size:.88rem; color:var(--text-secondary);">
+                        Posti disponibili: {{ partecipanti|length }} / {{ public_event.max_participants }}
+                    </p>
+                    {% endif %}
+                    <form action="{% url 'unisciti_evento' evento.pk %}" method="post">
+                        {% csrf_token %}
+                        {% if public_event.ticket_price > 0 %}
+                        <button type="submit" class="btn btn-success">💳 Acquista Biglietto e Iscriviti</button>
+                        {% else %}
+                        <button type="submit" class="btn btn-success">✓ Iscriviti Gratuitamente</button>
+                        {% endif %}
+                    </form>
                     {% else %}
                     <div class="info-box info-box-warning">⚠ Non hai un invito attivo per questo evento.</div>
                     {% endif %}
@@ -67,8 +110,10 @@
                     <div class="info-box info-box-info">🤝 Fai parte del team organizzativo di questo evento.</div>
                     {% endif %}
                     {% if is_supervisor or request.user.is_superuser or user_is_joined %}
-                    <a href="{% url 'modifica_evento' evento.pk %}"
-                        class="btn btn-secondary d-block text-center text-decoration-none mb-2">✏ Modifica Evento</a>
+                    {% if modifica_url %}
+                    <a href="{{ modifica_url }}"
+                        class="btn btn-secondary d-block text-center text-decoration-none mb-2">Modifica Evento</a>
+                    {% endif %}
                     {% endif %}
                     {% if is_supervisor %}
                     <form action="{% url 'elimina_evento' evento.pk %}" method="post"

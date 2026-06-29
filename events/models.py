@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.urls import reverse
 from datetime import datetime
+from django.utils import timezone
 """
 Le tabelle relazionali defite sono:
 1. Event.supervisor -> (Uno-a-Molti) verso la tabella User.
@@ -39,8 +40,16 @@ class Event(models.Model):
         related_name='organized_events' 
     )
     stato = models.IntegerField(default=0)
-    #Definita da ai per permettere di ritornare all'url del dettaglio evento
-    #Utile per redirect
+
+    @property
+    def stato_evento(self):
+        now = timezone.now()
+        if self.date_time_start > now:
+            return 'PROGRAMMATO'
+        if self.date_time_end < now:
+            return 'PASSATO'
+        return 'IN_CORSO'
+
     def get_absolute_url(self):
         return reverse('dettaglio_evento', kwargs={'pk': self.pk})
 
