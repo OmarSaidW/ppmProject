@@ -89,7 +89,7 @@ class UserListView(LoginRequiredMixin, ListView):
         ruolo_filter = self.request.GET.get('ruolo', '')
         if ruolo_filter in ('ORGANIZER', 'ATTENDEE'):
             qs = qs.filter(ruolo=ruolo_filter)
-        return qs
+        return qs[:20]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

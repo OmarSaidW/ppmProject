@@ -30,7 +30,7 @@ class EventListView(LoginRequiredMixin, ListView):
                 Q(invitations__invitee=user) |
                 Q(publicevent__public_visibility=True)
             ).distinct()
-        return qs.order_by('-date_time_start')[:50]
+        return qs.order_by('-date_time_start')[:20]
 
 
 # --- DETTAGLIO EVENTO ---
