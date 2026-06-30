@@ -2,14 +2,14 @@
 
 :root {
     /* ── Background ── */
-    --bg-body: #F0F1FF;
+    --bg-body: #FAFBFC;
     --bg-card: #FFFFFF;
 
-    /* ── Brand ── */
-    --color-primary: #5046E5;
-    --color-primary-hover: #4338D4;
-    --color-primary-light: #EDE9FE;
-    --color-primary-rgb: 80, 70, 229;
+    /* ── Brand (UniFi Blue) ── */
+    --color-primary: #005B96;
+    --color-primary-hover: #00467A;
+    --color-primary-light: #EAF4FB;
+    --color-primary-rgb: 0, 91, 150;
 
     /* ── Secondary (Gold) ── */
     --color-gold: #F59E0B;
@@ -25,27 +25,27 @@
     --color-danger-light: #FEE2E2;
     --color-warning: #F59E0B;
     --color-warning-light: #FEF3C7;
-    --color-info-light: #EDE9FE;
+    --color-info-light: #EAF4FB;
 
     /* ── Text ── */
-    --text-primary: #1A1741;
-    --text-secondary: #5B6080;
+    --text-primary: #1F2937;
+    --text-secondary: #6B7280;
     --text-muted: #9CA3AF;
 
     /* ── Navbar ── */
-    --nav-bg: #1E1A45;
-    --nav-bg-open: #16143A;
+    --nav-bg: #003F6B;
+    --nav-bg-open: #002E50;
     --nav-height: 64px;
 
     /* ── Surface ── */
-    --border-color: #E4E5FF;
+    --border-color: #DCE3EA;
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 18px;
     --radius-xl: 24px;
-    --shadow-sm: 0 1px 4px rgba(80, 70, 229, .06), 0 1px 2px rgba(0, 0, 0, .04);
-    --shadow-md: 0 4px 20px rgba(80, 70, 229, .10), 0 2px 6px rgba(0, 0, 0, .04);
-    --shadow-lg: 0 16px 48px rgba(80, 70, 229, .16), 0 4px 16px rgba(0, 0, 0, .06);
+    --shadow-sm: 0 1px 4px rgba(0, 91, 150, .06), 0 1px 2px rgba(0, 0, 0, .04);
+    --shadow-md: 0 4px 20px rgba(0, 91, 150, .10), 0 2px 6px rgba(0, 0, 0, .04);
+    --shadow-lg: 0 16px 48px rgba(0, 91, 150, .16), 0 4px 16px rgba(0, 0, 0, .06);
 }
 
 /* ─── RESET ─── */
@@ -91,7 +91,7 @@ body {
     align-items: center;
     gap: .4rem;
     border-radius: var(--radius-sm);
-    color: #A5B4FC;
+    color: #7EC8E3;
     font-weight: 500;
     font-size: .92rem;
     padding: .45rem .8rem;
@@ -139,14 +139,14 @@ body {
 }
 
 .nav-username {
-    color: #E8EAFF;
+    color: #E0EFF8;
     font-weight: 600;
     font-size: .88rem;
 }
 
 .nav-role-chip {
     background: rgba(165, 180, 252, .2);
-    color: #A5B4FC;
+    color: #7EC8E3;
     font-size: .7rem;
     font-weight: 700;
     padding: .12rem .5rem;
@@ -248,7 +248,7 @@ body {
 
 .alert-info {
     background: var(--color-primary-light);
-    color: #3730A3;
+    color: #004E82;
     border-left: 4px solid var(--color-primary);
 }
 
@@ -492,12 +492,12 @@ body {
 }
 
 .btn-secondary {
-    background: #E8EAFF;
+    background: #E0EFF8;
     color: var(--text-primary);
 }
 
 .btn-secondary:hover {
-    background: #D8DBFF;
+    background: #C8E2F2;
     box-shadow: none;
     color: var(--text-primary);
 }
@@ -635,7 +635,7 @@ table {
 }
 
 thead tr {
-    background: #F5F5FF;
+    background: #F2F7FB;
 }
 
 th {
@@ -651,7 +651,7 @@ th {
 
 td {
     padding: 14px 20px;
-    border-bottom: 1px solid #F0F1FF;
+    border-bottom: 1px solid #EFF4F8;
     font-size: .92rem;
     vertical-align: middle;
 }
@@ -661,7 +661,7 @@ tr:last-child td {
 }
 
 tbody tr:hover {
-    background: #FAFBFF;
+    background: #F4F9FC;
 }
 
 /* ═══════════════════════════════════════
@@ -760,7 +760,7 @@ tbody tr:hover {
 
 .info-box-info {
     background: var(--color-primary-light);
-    color: #3730A3;
+    color: #004E82;
     border-left: 4px solid var(--color-primary);
 }
 
@@ -828,7 +828,7 @@ tbody tr:hover {
     justify-content: space-between;
     align-items: center;
     padding: 20px 28px;
-    background: linear-gradient(135deg, var(--nav-bg) 0%, #3D3680 100%);
+    background: var(--nav-bg);
 }
 
 .modal-header h3,
@@ -898,7 +898,7 @@ tbody tr:hover {
 }
 
 .auth-brand {
-    background: linear-gradient(135deg, #1E1A45 0%, #3D3680 100%);
+    background: var(--nav-bg);
     padding: 36px 40px 28px;
     text-align: center;
 }
@@ -918,7 +918,7 @@ tbody tr:hover {
 
 .auth-app-tagline {
     font-size: .85rem;
-    color: #A5B4FC;
+    color: #7EC8E3;
     margin-top: 6px;
 }
 
@@ -1085,7 +1085,7 @@ h2 {
    ═══════════════════════════════════════ */
 .view-toggle {
     display: inline-flex;
-    background: #E8EAFF;
+    background: #E0EFF8;
     border-radius: var(--radius-md);
     padding: 3px;
     gap: 2px;
@@ -1147,7 +1147,7 @@ h2 {
 }
 
 .fc-daygrid-day.fc-day-today {
-    background: #EDE9FE44 !important;
+    background: #EAF4FB44 !important;
 }
 
 /* ═══════════════════════════════════════

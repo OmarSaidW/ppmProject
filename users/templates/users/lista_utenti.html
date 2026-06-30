@@ -1,7 +1,7 @@
 {% extends 'events/base.html' %}
 {% load static %}
 
-{% block title %}Utenti – EventHub{% endblock %}
+{% block title %}Utenti – Gestionale UNIFI{% endblock %}
 {% block nav_active_utenti %}active{% endblock %}
 
 {% block content %}
@@ -54,7 +54,7 @@
                         </div>
                         <strong>{{ utente.username }}</strong>
                         {% if utente.is_superuser %}
-                        <span class="badge" style="background:#1E1A45;color:#A5B4FC;font-size:.68em;">Admin</span>
+                        <span class="badge" style="background:#003F6B;color:#7EC8E3;font-size:.68em;">Admin</span>
                         {% endif %}
                     </div>
                 </td>
