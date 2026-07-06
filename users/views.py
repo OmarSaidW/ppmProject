@@ -140,7 +140,8 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     success_url = reverse_lazy('lista_eventi')
 
     def test_func(self):
-        return self.request.user == self.get_object()
+        user = self.request.user
+        return user == self.get_object() and user.ruolo == 'ATTENDEE' and not user.is_superuser
 
     def form_valid(self, form):
         messages.success(self.request, "Il tuo account è stato eliminato.")

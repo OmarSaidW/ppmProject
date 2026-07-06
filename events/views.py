@@ -141,11 +141,7 @@ class JoinEventView(LoginRequiredMixin, View):
             return redirect('dettaglio_evento', pk=pk)
 
         if user.ruolo == 'ORGANIZER' or user.is_superuser:
-            if user != event.supervisor and not event.organizers.filter(id=user.id).exists():
-                event.organizers.add(user)
-                messages.success(request, "Ti sei unito al team degli organizzatori per questo evento!")
-            else:
-                messages.info(request, "Fai già parte del team degli organizzatori di questo evento.")
+            messages.error(request, "Non puoi unirti da solo al team organizzativo: devi essere aggiunto tramite la modifica evento.")
         elif user.ruolo == 'ATTENDEE':
             try:
                 public_event = event.publicevent
@@ -342,7 +338,13 @@ class PrivateEventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
     success_url = reverse_lazy('lista_eventi')
 
     def test_func(self):
-        return self.request.user.ruolo == 'ORGANIZER' or self.request.user.is_superuser
+        user = self.request.user
+        if user.is_superuser:
+            return True
+        if user.ruolo != 'ORGANIZER':
+            return False
+        event = get_object_or_404(Event, pk=self.kwargs['pk'])
+        return user == event.supervisor or event.organizers.filter(id=user.id).exists()
 
     def get_object(self, queryset=None):
         event = get_object_or_404(Event, pk=self.kwargs['pk'])
@@ -365,7 +367,13 @@ class PublicEventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView)
     success_url = reverse_lazy('lista_eventi')
 
     def test_func(self):
-        return self.request.user.ruolo == 'ORGANIZER' or self.request.user.is_superuser
+        user = self.request.user
+        if user.is_superuser:
+            return True
+        if user.ruolo != 'ORGANIZER':
+            return False
+        event = get_object_or_404(Event, pk=self.kwargs['pk'])
+        return user == event.supervisor or event.organizers.filter(id=user.id).exists()
 
     def get_object(self, queryset=None):
         event = get_object_or_404(Event, pk=self.kwargs['pk'])

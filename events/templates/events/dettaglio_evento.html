@@ -205,10 +205,7 @@
 
                     {% elif request.user.ruolo == 'ORGANIZER' or request.user.is_superuser %}
                     {% if not user_is_joined %}
-                    <form action="{% url 'unisciti_evento' evento.pk %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-success">+ Unisciti come Organizzatore</button>
-                    </form>
+                    <div class="info-box info-box-warning">⚠ Non fai parte del team organizzativo di questo evento. Devi essere aggiunto tramite la modifica evento.</div>
                     {% else %}
                     <div class="info-box info-box-info">🤝 Fai parte del team organizzativo di questo evento.</div>
                     {% endif %}

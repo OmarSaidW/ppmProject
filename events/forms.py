@@ -1,5 +1,5 @@
 from django import forms
-from datetime import datetime
+from django.utils import timezone
 from .models import PublicEvent, EventoPrivato
 
 
@@ -27,7 +27,7 @@ class PublicEventForm(forms.ModelForm):
         cleaned_data = super().clean()
         start = cleaned_data.get('date_time_start')
         end = cleaned_data.get('date_time_end')
-        now = datetime.now()
+        now = timezone.now()
         if start and 'date_time_start' in self.changed_data and start < now:
             self.add_error('date_time_start', 'La data di inizio non può essere nel passato.')
         if end and 'date_time_end' in self.changed_data and end < now:
@@ -62,7 +62,7 @@ class EventoPrivatoForm(forms.ModelForm):
         start = cleaned_data.get('date_time_start')
         end = cleaned_data.get('date_time_end')
         deadline = cleaned_data.get('invitation_deadline')
-        now = datetime.now()
+        now = timezone.now()
         if start and 'date_time_start' in self.changed_data and start < now:
             self.add_error('date_time_start', 'La data di inizio non può essere nel passato.')
         if end and 'date_time_end' in self.changed_data and end < now:

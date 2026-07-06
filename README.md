@@ -9,8 +9,10 @@
 
 ## Breve Descrizione
 
-Applicazione web completa per la gestione di eventi pubblici e privati. Il sistema supporta tre ruoli distinti (Superadmin, Organizer, Attendee) con permessi diversi (personalizzati) su ogni operazione. Gli organizzatori creano e gestiscono eventi, gli attendee si iscrivono o accettano inviti, il superadmin ha controllo totale sull'utenza. Tutte le pagine sono accessibili solo dopo autenticazione. E' possibile registrarsi al sito tramite un form di registrazione separato (sotto forma di attendee). 
-Il progetto è stato pensato per essere espando in qualcosa di più di un semplice Event Management System, con l'idea di poter aggiungere funzionalità in futuro. 
+Questa è un'applicazione web completa per la gestione di eventi pubblici e privati (Event Management System UNIFI). 
+
+Il sistema supporta tre ruoli distinti (Superadmin, Organizer, Attendee) con permessi diversi (personalizzati) su ogni operazione. Gli organizzatori creano e gestiscono eventi, gli attendee si iscrivono o accettano inviti, il superadmin ha controllo totale sull'utenza. 
+Tutte le pagine sono accessibili solo dopo autenticazione. E' possibile registrarsi al sito tramite un form di registrazione separato (sotto forma di attendee). 
 
 Gli eventi seguono un modello a ereditarietà multi-tabella (MTI) Django:  
 `Event` → `PublicEvent` | `EventoPrivato`
@@ -26,6 +28,7 @@ Lo stato di ogni evento (`PROGRAMMATO` / `IN_CORSO` / `PASSATO`) è calcolato di
 - Attivazione/disattivazione di account Organizer (blocca il login quando disattivato con messaggio specifico "Utente Disattivato")
 - Eliminazione di account Attendee dalla lista utenti
 - Cambio ruolo di qualsiasi utente 
+- "Tutte le funzionalità di Organizer"
 
 ### Organizer
 - Creazione di eventi pubblici (`PublicEvent`) e privati (`EventoPrivato`)
@@ -33,7 +36,7 @@ Lo stato di ogni evento (`PROGRAMMATO` / `IN_CORSO` / `PASSATO`) è calcolato di
 - Invito di utenti Attendee a eventi privati tramite ricerca username
 - Rimozione di partecipanti e co-organizzatori da un evento
 - Visualizzazione lista completa partecipanti
-- Cambio ruolo di utenti Attendee
+- Cambio ruolo di utenti Attendee (da Attendee a Organizer)
 
 ### Attendee
 - Visualizzazione eventi pubblici con `public_visibility=True`
@@ -42,64 +45,68 @@ Lo stato di ogni evento (`PROGRAMMATO` / `IN_CORSO` / `PASSATO`) è calcolato di
 - Abbandono di un evento a cui si è iscritti
 - Location nascosta fino all'iscrizione se `secret_location=True`
 - Visibilità limitata nella lista utenti (vede solo altri Attendee, non gli Organizer)
+- Eliminazione del proprio account
 
 ### Tutti gli utenti autenticati
-- Calendario dinamico degli eventi (FullCalendar, feed JSON su `/eventi/calendario/json/`) -> Implementato con SignalR
-- Pagina di profilo personale con lista eventi paginata
+- Calendario dinamico degli eventi (FullCalendar, feed JSON su `/eventi/calendario/json/`) -> Implementato con "SignalR"
+- Pagina di profilo personale con lista eventi in cui si è "organizzatore" o "partecipante" (quindi lista unificata) paginata
 - Modifica del proprio profilo (email, telefono)
-- Eliminazione del proprio account
+
 
 ---
 
-## Architettura tecnica
+## Architettura
 
 ### Struttura app
 
-```
-ppmProject/
-├── users/          # autenticazione, CustomUser, ruoli, gestione account
-└── events/         # eventi, iscrizioni, inviti, calendario
-```
+
+ppmProject contiene tre sottodirectory:
+-  users/          # autenticazione, CustomUser, ruoli, gestione account
+- events/         # eventi, iscrizioni, inviti, calendario
+- ppmProject/     # config (asgi, settings, urls, wsgi)
+
+
+
 
 ### Modelli principali
 
 ```
 CustomUser(AbstractUser) -> Derivato da AbstractUser di Django
-  ├── ruolo: CharField [ORGANIZER | ATTENDEE]
-  ├── telefono: CharField
-  └── organizer_attivo: BooleanField     # sincronizzato con is_active per bloccare login
+   -> ruolo: CharField [ORGANIZER | ATTENDEE]
+   -> telefono: CharField
+   -> organizer_attivo: BooleanField     # Necessario per bloccare l'organizzatore 
 
 Event  (tabella base MTI) -> E' stata utilizzata l'Ereditarietà Multi-Tabella di Django
-  ├── title, description, location
-  ├── date_time_start, date_time_end
-  ├── supervisor: FK -> CustomUser
-  ├── organizers: FK Molti a Molti -> CustomUser
-  ├── tipo: CharField [PUBLIC | PRIVATE]
-  └── stato_evento: @property -> [PROGRAMMATO | IN_CORSO | PASSATO]
+   -> title, description, location
+   -> date_time_start, date_time_end
+   -> supervisor: è una FK a CustomUser
+   -> organizers: è una FK Molti a Molti verso CustomUser
+   -> tipo: CharField (PUBLIC,  PRIVATE)
+   -> stato_evento: (ROGRAMMATO, IN_CORSO, PASSATO)
 
 PublicEvent(Event)  # tabella: events_publicevent -> Estende Event
-  ├── ticket_price: Decimal
-  ├── public_visibility: Boolean
-  ├── registration_required: Boolean
-  └── max_participants: PositiveInteger (nullable = illimitato)
+  -> ticket_price: Decimal
+  -> public_visibility: Boolean
+  -> registration_required: Boolean
+  -> max_participants: PositiveInteger (nullable = illimitato)
 
 EventoPrivato(Event) # tabella: events_eventoprivato -> Estende Event
-  ├── invite_code: CharField (unique)
-  ├── invitation_deadline: DateTimeField
-  ├── approval_required: Boolean
-  └── secret_location: Boolean
+  -> invite_code: CharField (unique)
+  -> invitation_deadline: DateTimeField
+  -> approval_required: Boolean
+  -> secret_location: Boolean
 
 Registration -> Modello per gestire le iscrizioni degli attendee agli eventi
-  ├── user: FK → CustomUser
-  ├── event: FK → Event
-  ├── stato: CharField [ATTIVO | USCITO]
-  └── payment_status: CharField [PENDING | PAID | REFUNDED]
+  -> user: FK → CustomUser
+  -> event: FK → Event
+  -> stato: CharField [ATTIVO | USCITO]
+  -> payment_status: CharField [PENDING | PAID | REFUNDED]
 
 Invitation -> Modello per gestire gli inviti degli organizer agli attendee agli eventi che la richiedono
-  ├── event: FK → Event
-  ├── invitee: FK → CustomUser
-  ├── inviter: FK → CustomUser
-  └── rifiutato: Boolean
+  -> event: FK → Event
+  -> invitee: FK → CustomUser
+  -> inviter: FK → CustomUser
+  -> rifiutato: Boolean
 ```
 
 ### Relazioni tra tabelle
@@ -136,8 +143,13 @@ Invitation -> Modello per gestire gli inviti degli organizer agli attendee agli 
 > **Nota**: Per velocizzare la scrittura è stato omesso il decoratore `LoginRequiredMixin` su quasi tutte le viste nella tabella. 
 > In realtà è stato aggiunto a tutte le viste eccezzione fatta per `CustomLoginView`
 
-## Scelte di implementazione
-Non 
+## Scelte Architetturali
+Sono state fatte scelte di implementazione per gestione di eventi e utenti. 
+### Gestione CRUD
+La gestione CRUD non è stata implementata completamente per tutte le tabelle: 
+- Gli `Organizer` non possono essere eliminati ma solo disattivati. 
+- Gli `eventi` non possono essere passati da `Privato` a `Pubblico` o viceversa. 
+- Per il resto è stato implementato il `CRUD completo`. 
 
 
 ### Validazione input
@@ -282,3 +294,4 @@ python manage.py createsuperuser
 - Aggiungere immagini profilo agli utenti
 - Aggiungere test unitari
 - Aggiungere testi di integrazione
+- Aggiungere possibilità di vedere la pagina degli eventi anche senza essersi loggati

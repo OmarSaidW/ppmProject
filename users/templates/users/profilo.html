@@ -34,11 +34,13 @@
             <a href="{% url 'lista_utenti' %}" class="btn btn-secondary btn-sm">← Lista Utenti</a>
             {% if user == utente_profilo %}
             <a href="{% url 'modifica_profilo' user.pk %}" class="btn btn-sm">✏ Modifica Dati</a>
+            {% if user.ruolo == 'ATTENDEE' and not user.is_superuser %}
             <form action="{% url 'elimina_profilo' user.pk %}" method="post" style="margin:0;"
                   onsubmit="return confirm('Sicuro di voler eliminare il tuo account?')">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-sm btn-danger">🗑 Elimina Account</button>
             </form>
+            {% endif %}
             {% endif %}
         </div>
     </div>
