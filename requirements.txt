@@ -1,3 +1,5 @@
-asgiref==3.11.1
-Django==6.0.6
-sqlparse==0.5.5
+Django==6.0.6 
+
+#Questi due sono installati di default con Django (quindi si potrebbe tranquillamente omettere di scriverli qui)
+asgiref==3.11.1 # Asynchronous Server Gateway Interface
+sqlparse==0.5.5 # SQL parser

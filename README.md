@@ -84,29 +84,29 @@ Event  (tabella base MTI) -> E' stata utilizzata l'Ereditarietà Multi-Tabella d
    -> tipo: CharField (PUBLIC,  PRIVATE)
    -> stato_evento: (ROGRAMMATO, IN_CORSO, PASSATO)
 
-PublicEvent(Event)  # tabella: events_publicevent -> Estende Event
+PublicEvent(Event)  -> tabella: events_publicevent -> Estende Event
   -> ticket_price: Decimal
   -> public_visibility: Boolean
   -> registration_required: Boolean
   -> max_participants: PositiveInteger (nullable = illimitato)
 
-EventoPrivato(Event) # tabella: events_eventoprivato -> Estende Event
+EventoPrivato(Event) -> tabella: events_eventoprivato -> Estende Event
   -> invite_code: CharField (unique)
   -> invitation_deadline: DateTimeField
   -> approval_required: Boolean
   -> secret_location: Boolean
 
 Registration -> Modello per gestire le iscrizioni degli attendee agli eventi
-  -> user: FK → CustomUser
-  -> event: FK → Event
+  -> user: è una FK a CustomUser
+  -> event: è una FK a Event
   -> stato: CharField [ATTIVO | USCITO]
   -> payment_status: CharField [PENDING | PAID | REFUNDED]
 
 Invitation -> Modello per gestire gli inviti degli organizer agli attendee agli eventi che la richiedono
-  -> event: FK → Event
-  -> invitee: FK → CustomUser
-  -> inviter: FK → CustomUser
-  -> rifiutato: Boolean
+  -> event: è una FK a Event
+  -> invitee: è una FK a CustomUser
+  -> inviter: è una FK a CustomUser
+  -> rifiutato: è un Boolean
 ```
 
 ### Relazioni tra tabelle
@@ -123,7 +123,7 @@ Invitation -> Modello per gestire gli inviti degli organizer agli attendee agli 
 | OneToOne (Ereditarietà Multi-Tabella) | `PublicEvent.event_ptr` | `Event` |
 | OneToOne (Ereditarietà Multi-Tabella) | `EventoPrivato.event_ptr` | `Event` |
 
-### Class-based views principali
+### Views principali
 
 | View | Classe base | Accesso |
 |------|-------------|---------|
@@ -135,12 +135,12 @@ Invitation -> Modello per gestire gli inviti degli organizer agli attendee agli 
 | `PrivateEventUpdateView` | `UserPassesTestMixin, UpdateView` | Solo Organizer proprietario |
 | `JoinEventView` | `View` | Solo Attendee |
 | `PaymentView` | `View` | Solo Attendee |
-| `EventCalendarJsonView` | `View` | Tutti (feed JSON) |
+| `EventCalendarJsonView` | `View` | Tutti |
 | `UserListView` | `ListView` | Tutti (filtrata per ruolo) |
 | `CustomLoginView` | `DjangoLoginView` | Pubblico |
 | `ToggleOrganizerStatusView` | `View` | Solo Superadmin |
 
-> **Nota**: Per velocizzare la scrittura è stato omesso il decoratore `LoginRequiredMixin` su quasi tutte le viste nella tabella. 
+> **Nota**: Per velocizzare la scrittura è stato omesso il `LoginRequiredMixin` su tutte le viste nella tabella. 
 > In realtà è stato aggiunto a tutte le viste eccezzione fatta per `CustomLoginView`
 
 ## Scelte Architetturali
@@ -152,7 +152,7 @@ La gestione CRUD non è stata implementata completamente per tutte le tabelle:
 - Per il resto è stato implementato il `CRUD completo`. 
 
 
-### Validazione input
+### Validazione input (Frontend / Backend)
 
 - `PublicEventForm.clean()`: data inizio/fine non nel passato; data fine ≥ data inizio
 - `EventoPrivatoForm.clean()`: stesse regole + `invitation_deadline` non nel passato e ≤ data inizio
@@ -164,7 +164,7 @@ La gestione CRUD non è stata implementata completamente per tutte le tabelle:
 - `LoginRequiredMixin` su tutte le view che richiedono autenticazione
 - `UserPassesTestMixin` + `test_func()` per controllo ruolo nelle azioni sensibili
 - CSRF token su tutti i form
-- `transaction.atomic()` + `select_for_update()` in `PaymentView` e per eveitare conflitti in caso di `max_participants` raggiunto da più attendee simultaneamente
+- `transaction.atomic()` + `select_for_update()` in `PaymentView` e per evitare conflitti in caso di `max_participants` raggiunto da più attendee simultaneamente
 - Sessione: 30 minuti con rinnovo ad ogni richiesta (`SESSION_COOKIE_AGE = 1800`, `SESSION_SAVE_EVERY_REQUEST = True`)
 - Organizer disattivati: `is_active = False` blocca `ModelBackend.authenticate()`; `CustomLoginView` intercetta e mostra "Utente Disattivato" al posto dell'errore generico
 
@@ -218,21 +218,10 @@ python manage.py createsuperuser
 
 | Username | Password | Ruolo | Note |
 |----------|----------|-------|------|
-| `admin` | `aspire315` | Superadmin | Accesso `/admin/`, gestione organizer |
+| `admin` | `demo_admin` | Superadmin | Accesso `/admin/`, gestione organizer |
 | `test_organizer` | `demo_org_1` | Organizer (attivo) | Crea/modifica/elimina eventi |
 | `test_organizer_2` | `demo_org_2` | Organizer (attivo) | Test co-gestione e disattivazione |
 | `test_attendee` | `demo_att_1` | Attendee | Iscrizioni, inviti, pagamento simulato |
-
-> **Nota:** Se le password nel `db.sqlite3` incluso non corrispondono, aggiornarle con:
-> ```bash
-> python manage.py changepassword <username>
-> ```
-
----
-
-## Link al deploy
-
-> **TBD** — da aggiungere prima della scadenza del 12/07/2026.
 
 ---
 
@@ -253,8 +242,8 @@ python manage.py createsuperuser
 2. **Lista Eventi** → **Nuovo Evento** → scegliere **Evento Pubblico**
 3. Compilare: titolo, descrizione, date future, location; impostare `ticket_price = 10.00`, `max_participants = 1`, `public_visibility = True`; salvare
 4. Aprire il dettaglio → verificare badge **PROGRAMMATO**
-5. **Modifica Evento** → cambiare titolo → salvare → verificare aggiornamento
-6. **Invita Partecipante** → cercare `test_attendee` → inviare invito
+5. Login con `test_attendee` , aprire il dettaglio dell'evento → **Iscriviti**. 
+6. **Modifica Evento** → cambiare titolo → salvare → verificare aggiornamento
 7. **Elimina Evento** → confermare → verificare redirect alla lista
 
 
