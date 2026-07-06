@@ -68,8 +68,12 @@ ppmProject contiene tre sottodirectory:
 - events/         # eventi, iscrizioni, inviti, calendario
 - ppmProject/     # config (asgi, settings, urls, wsgi)
 
+### Architettura Frontend
 
-
+Il frontend è creato usando il template engine di Django. I template estendono `events/base.html` tramite blocchi (`{% block content %}`). Lo stile si basa su Bootstrap 5.3.3 e Bootstrap Icons, con un CSS personalizzato (non sono state usate librerie come Tailwind) in `events/static/events/css/style.css`. JavaScript gestisce interazioni con il browser e comunica con il backend. Viene usata per: 
+- Far sparire automaticamente i messaggi
+- Sincronizzazione tra checkbox e select per la selezione organizzatori (prima la selezione era effettuata solo tramite select e quindi poco pratica)
+- calendario dinamico
 
 ### Modelli principali
 
