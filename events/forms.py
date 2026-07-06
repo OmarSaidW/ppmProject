@@ -1,9 +1,18 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import PublicEvent, EventoPrivato
 
+CustomUser = get_user_model()
+
 
 class PublicEventForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        organizzatori_qs = CustomUser.objects.filter(ruolo='ORGANIZER')
+        self.fields['supervisor'].queryset = organizzatori_qs
+        self.fields['organizers'].queryset = organizzatori_qs
+
     class Meta:
         model = PublicEvent
         fields = [
@@ -38,6 +47,12 @@ class PublicEventForm(forms.ModelForm):
 
 
 class EventoPrivatoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        organizzatori_qs = CustomUser.objects.filter(ruolo='ORGANIZER')
+        self.fields['supervisor'].queryset = organizzatori_qs
+        self.fields['organizers'].queryset = organizzatori_qs
+
     class Meta:
         model = EventoPrivato
         fields = [

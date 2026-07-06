@@ -27,7 +27,7 @@ class EventListView(LoginRequiredMixin, ListView):
         else:
             qs = Event.objects.filter(
                 Q(registration__user=user) |
-                Q(invitations__invitee=user) |
+                Q(invitations__invitee=user, invitations__rifiutato=False) |
                 Q(publicevent__public_visibility=True)
             ).distinct()
         return qs.order_by('-date_time_start')[:20]
@@ -50,7 +50,7 @@ class EventDetailView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         except PublicEvent.DoesNotExist:
             pass
         has_registration = Registration.objects.filter(user=user, event=event).exists()
-        has_invitation = Invitation.objects.filter(invitee=user, event=event).exists()
+        has_invitation = Invitation.objects.filter(invitee=user, event=event, rifiutato=False).exists()
         return has_registration or has_invitation
 
     def _context_per_organizer(self, event, is_supervisor):
@@ -467,7 +467,7 @@ class EventCalendarJsonView(LoginRequiredMixin, View):
         else:
             eventi = Event.objects.filter(
                 Q(registration__user=user) |
-                Q(invitations__invitee=user) |
+                Q(invitations__invitee=user, invitations__rifiutato=False) |
                 Q(publicevent__public_visibility=True)
             ).filter(date_time_start__range=(six_months_ago, six_months_later)).distinct()
 
