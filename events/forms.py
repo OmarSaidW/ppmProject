@@ -18,7 +18,7 @@ class PublicEventForm(forms.ModelForm):
             'date_time_end': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Luogo'}),
             'supervisor': forms.Select(attrs={'class': 'form-control'}),
-            'organizers': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'organizers': forms.SelectMultiple(attrs={'class': 'form-control d-md-none js-organizer-select'}),
             'ticket_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'max_participants': forms.NumberInput(attrs={'class': 'form-control'}),
         }
@@ -52,7 +52,7 @@ class EventoPrivatoForm(forms.ModelForm):
             'date_time_end': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Luogo'}),
             'supervisor': forms.Select(attrs={'class': 'form-control'}),
-            'organizers': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'organizers': forms.SelectMultiple(attrs={'class': 'form-control d-md-none js-organizer-select'}),
             'invite_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Codice invito univoco'}),
             'invitation_deadline': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
         }
