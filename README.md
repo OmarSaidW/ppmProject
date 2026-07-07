@@ -3,9 +3,8 @@
 **Studente:** Omar Said  
 **Tipo progetto:** Full-Stack Web Application  
 **Framework:** Django
-**Tipo di Elaborato**  Traccia 3: Event Management System
-**Link al deploy**  
-**Link al repo GitHub** https://github.com/OmarSaidW/ppmProject
+**Tipo di Elaborato**  Traccia 3: Event Management System  
+**Link al deploy**  https://ppmproject-cmfb.onrender.com
 
 
 ---
